@@ -7,8 +7,10 @@ import { RouterLink, RouterView } from 'vue-router'
     <div class="w-full max-w-2xl border-2 rounded border-emerald-900">
       <header class="p-2">
         <nav class="flex flex-row gap-2">
-          <RouterLink class="flex-1 text-center p-2 bg-emerald-800 rounded" to="/">Send</RouterLink>
-          <RouterLink class="flex-1 text-center p-2 rounded" to="/about">Receive</RouterLink>
+          <RouterLink class="flex-1 text-center p-2 bg-emerald-800 rounded" to="/send"
+            >Send</RouterLink
+          >
+          <RouterLink class="flex-1 text-center p-2 rounded" to="/receive">Receive</RouterLink>
         </nav>
       </header>
 
