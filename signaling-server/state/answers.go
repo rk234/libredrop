@@ -9,8 +9,8 @@ type Answer struct {
 
 var answers map[string]Answer = make(map[string]Answer)
 
-func PutAnswer(answererID string, answer Answer) {
-	answers[answererID] = answer
+func PutAnswer(answer Answer) {
+	answers[answer.From] = answer
 }
 
 func GetAnswersTo(offererID string) []Answer {
@@ -22,4 +22,8 @@ func GetAnswersTo(offererID string) []Answer {
 	}
 
 	return answers
+}
+
+func RemoveAnswer(answererID string) {
+	delete(answers, answererID)
 }

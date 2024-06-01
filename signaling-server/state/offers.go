@@ -8,10 +8,14 @@ type Offer struct {
 
 var offers map[string]Offer = make(map[string]Offer)
 
-func PutOffer(offererID string, offer Offer) {
-	offers[offererID] = offer
+func PutOffer(offer Offer) {
+	offers[offer.From] = offer
 }
 
 func GetOfferFrom(offererID string) Offer {
 	return offers[offererID]
+}
+
+func RemoveOffer(offererID string) {
+	delete(offers, offererID)
 }

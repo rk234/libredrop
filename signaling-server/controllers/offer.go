@@ -12,7 +12,7 @@ func PostOffer(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	state.PutOffer(offer.From, offer)
+	state.PutOffer(offer)
 
 	return ctx.SendStatus(200)
 }
