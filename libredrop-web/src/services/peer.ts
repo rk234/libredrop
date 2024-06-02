@@ -1,13 +1,14 @@
-export class PeerReceiver {
-  id: string
-  constructor(id: string) {
-    this.id = id
-  }
+export type Peer = {
+  ID: string
+  DisplayName: string
 }
 
-export class PeerSender {
-  id: string
-  constructor(id: string) {
-    this.id = id
-  }
+export const me: Peer = {
+  ID: "peer-" + (Math.round(Math.random() * 100)),
+  DisplayName: localStorage.getItem("displayName") ?? "Unnamed Peer"
 }
+
+export function setDisplayName(name: string) {
+  me.DisplayName = name
+}
+

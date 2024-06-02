@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { inject } from 'vue';
+
+const rtcPeerConnection = inject<RTCPeerConnection>("rtcConnection")
 
 function handleDrop(event: DragEvent) {
   if (!event.dataTransfer) return;
@@ -18,6 +20,10 @@ function handleDrop(event: DragEvent) {
       console.log(await file.arrayBuffer())
     })
   }
+}
+
+function handleSend() {
+
 }
 </script>
 

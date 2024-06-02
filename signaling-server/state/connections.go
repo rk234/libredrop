@@ -11,6 +11,14 @@ func Connect(peer Peer) {
 	connections = append(connections, peer)
 }
 
+func DisconnectID(id string) {
+	for index, conn := range connections {
+		if conn.ID == id {
+			connections = append(connections[:index], connections[index+1:]...)
+		}
+	}
+}
+
 func Disconnect(peer Peer) {
 	var index int = -1
 	for i := 0; i < len(connections); i++ {

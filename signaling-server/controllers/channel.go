@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/gofiber/contrib/websocket"
 	"libredrop/signal/state"
 	"log"
+
+	"github.com/gofiber/contrib/websocket"
 )
 
 type SignalMessage struct {
@@ -85,5 +86,8 @@ func SignalingChannel(c *websocket.Conn) {
 				break
 			}
 		}
+
+		state.DisconnectID(c.Params("receiver"))
 	}
+
 }

@@ -3,7 +3,7 @@ package state
 type Offer struct {
 	From      string
 	OfferType string
-	Sdp       string
+	SDP       string
 }
 
 var offers map[string]Offer = make(map[string]Offer)
