@@ -99,5 +99,22 @@ export class SignalingChannel {
       MessageData: answer
     })
   }
+
+  sendOffer(
+    from: string,
+    offerType: string,
+    sdp: string
+  ) {
+    let offer: Offer = {
+      From: from,
+      OfferType: offerType,
+      SDP: sdp
+    }
+
+    this.sendMessage({
+      MessageType: "offer",
+      MessageData: offer
+    })
+  }
 }
 

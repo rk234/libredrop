@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { inject } from 'vue';
+import { me } from '@/services/peer';
+import { SignalingChannel, type Answer } from '@/services/signaling';
+import { inject, ref } from 'vue';
 
+const receiverID = ref<string>("")
 const rtcPeerConnection = inject<RTCPeerConnection>("rtcConnection")
 
 function handleDrop(event: DragEvent) {
@@ -22,8 +25,21 @@ function handleDrop(event: DragEvent) {
   }
 }
 
-function handleSend() {
+function handleAnswer(answer: Answer) {
 
+}
+
+async function handleSend() {
+  if (receiverID.value.trim().length > 0) {
+    const signalingChannel = new SignalingChannel(receiverID.value)
+    signalingChannel.connect()
+
+    const offer = await rtcPeerConnection?.createOffer()
+    rtcPeerConnection?.setLocalDescription(offer)
+
+    signalingChannel.sendOffer(me.ID, offer?.type || "", offer?.sdp || "")
+    signalingChannel.onReceiveAnswer = handleAnswer
+  }
 }
 </script>
 
@@ -38,7 +54,7 @@ function handleSend() {
       placeholder="Enter text to send"></textarea>
 
     <div class="flex flex-row gap-2">
-      <input class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
+      <input :value="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
       <button class="bg-emerald-600 p-2 rounded">Send</button>
     </div>
   </div>

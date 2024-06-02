@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { provide, ref, watch, type Ref } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 
 const route = useRoute()
 const currentPage = ref(route.name)
 
 watch(route, () => currentPage.value = route.name)
+
+const rtcPeerConnection = ref<RTCPeerConnection>(new RTCPeerConnection())
+provide("rtcConnection", rtcPeerConnection)
 </script>
 
 <template>
