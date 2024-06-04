@@ -14,7 +14,9 @@ type SignalMessage struct {
 }
 
 func SignalingChannel(c *websocket.Conn) {
-	log.Println(c.Params("receiver"))
+	peerID := c.Params("id")
+
+	state.ConnectPeer(peerID, c)
 
 	var (
 		mt  int
@@ -40,26 +42,6 @@ func SignalingChannel(c *websocket.Conn) {
 		log.Println("sm: ", sm)
 
 		switch sm.MessageType {
-		case "connect":
-			str, _ := json.Marshal(sm.MessageData)
-			var peer state.Peer
-			json.Unmarshal(str, &peer)
-
-			state.Connect(peer)
-
-			if err := c.WriteJSON(sm); err != nil {
-				log.Println("err: ", err)
-			}
-		case "disconnect":
-			str, _ := json.Marshal(sm.MessageData)
-			var peer state.Peer
-			json.Unmarshal(str, &peer)
-
-			state.Disconnect(peer)
-
-			if err := c.WriteJSON(sm); err != nil {
-				log.Println("err: ", err)
-			}
 		case "offer":
 			str, _ := json.Marshal(sm.MessageData)
 			var offer state.Offer
@@ -67,8 +49,11 @@ func SignalingChannel(c *websocket.Conn) {
 
 			state.PutOffer(offer)
 
-			if err := c.WriteJSON(sm); err != nil {
-				log.Println("err: ", err)
+			for receiver, conn := range state.PeerConnections {
+				log.Println("Broadcasting offer to ", receiver)
+				if err := conn.WriteJSON(sm); err != nil {
+					log.Println("err: ", err)
+				}
 			}
 		case "answer":
 			str, _ := json.Marshal(sm.MessageData)
@@ -77,17 +62,16 @@ func SignalingChannel(c *websocket.Conn) {
 
 			state.PutAnswer(answer)
 
-			if err := c.WriteJSON(sm); err != nil {
+			if err := state.GetConnection(answer.To).WriteJSON(sm); err != nil {
 				log.Println("err: ", err)
 			}
 		default:
 			if err = c.WriteMessage(mt, msg); err != nil {
 				log.Println("write: ", err)
-				break
 			}
 		}
 
-		state.DisconnectID(c.Params("receiver"))
+		// state.DisconnectPeer(peerID)
 	}
 
 }

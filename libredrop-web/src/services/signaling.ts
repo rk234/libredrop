@@ -32,19 +32,30 @@ export class SignalingChannel {
     this.onMessage = _ => { }
   }
 
-  connect() {
-    this.socket = new WebSocket(this.receiverID)
+  connect(onReady: () => void) {
+    this.socket = new WebSocket("ws://localhost:3000/channel/" + this.receiverID)
+    console.log("CHANNEL:")
+    console.log("ws://localhost:3000/channel/" + this.receiverID)
     this.socket.onopen = _ => {
       this.sendMessage({
         MessageType: "connect",
         MessageData: me
       })
+      onReady()
     }
     this.socket.onmessage = this._handleMessage
   }
 
+  setOfferHandler(handler: (offer: Offer) => void) {
+    this.onReceiveOffer = handler
+  }
+
+  setAnswerHandler(handler: (offer: Answer) => void) {
+    this.onReceiveAnswer = handler
+  }
 
   _handleMessage(event: MessageEvent<any>) {
+    //TODO: this is pointing to the websocket, should pass in SC
     const sm = JSON.parse(event.data) as SignalingMessage
 
     switch (sm.MessageType) {
@@ -61,6 +72,9 @@ export class SignalingChannel {
         }
         break
       case "offer":
+        console.log("RECEIVED MSG:")
+        console.log(sm)
+        console.log(this.onReceiveOffer)
         const offer = sm.MessageData as Offer
         if (offer.From != me.ID) {
           if (this.onReceiveOffer) this.onReceiveOffer(offer)

@@ -20,13 +20,6 @@ func main() {
 		return fiber.ErrUpgradeRequired
 	})
 
-	app.Get("/channel/:receiver", websocket.New(controllers.SignalingChannel))
-
-	signal.Post("/offer", controllers.PostOffer)
-	signal.Get("/offer/:", controllers.GetOffers)
-
-	signal.Post("/answer", controllers.PostAnswer)
-	signal.Get("/answer", controllers.GetAnswers)
-
+	app.Get("/channel/:id", websocket.New(controllers.SignalingChannel))
 	app.Listen(":3000")
 }

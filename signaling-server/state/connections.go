@@ -1,36 +1,23 @@
 package state
 
-type Peer struct {
-	ID          string
-	DisplayName string
+import (
+	"log"
+
+	"github.com/gofiber/contrib/websocket"
+)
+
+var PeerConnections map[string]*websocket.Conn = make(map[string]*websocket.Conn)
+
+func ConnectPeer(peerID string, conn *websocket.Conn) {
+	log.Println("=>CONNECT ", peerID)
+	PeerConnections[peerID] = conn
 }
 
-var connections []Peer
-
-func Connect(peer Peer) {
-	connections = append(connections, peer)
+func GetConnection(peerID string) *websocket.Conn {
+	return PeerConnections[peerID]
 }
 
-func DisconnectID(id string) {
-	for index, conn := range connections {
-		if conn.ID == id {
-			connections = append(connections[:index], connections[index+1:]...)
-		}
-	}
-}
-
-func Disconnect(peer Peer) {
-	var index int = -1
-	for i := 0; i < len(connections); i++ {
-		if connections[i].ID == peer.ID {
-			index = i
-			break
-		}
-	}
-
-	if index != -1 {
-		connections = append(connections[:index], connections[index+1:]...)
-		RemoveOffer(peer.ID)
-		RemoveAnswer(peer.ID)
-	}
+func DisconnectPeer(peerID string) {
+	log.Println("=>DISCONNECT ", peerID)
+	delete(PeerConnections, peerID)
 }

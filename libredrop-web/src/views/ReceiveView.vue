@@ -1,32 +1,31 @@
 <script setup lang="ts">
 import { me } from '@/services/peer';
 import { SignalingChannel, type Offer } from '@/services/signaling';
-import { inject, onMounted, ref } from 'vue'
+import { type Ref, inject, onMounted, ref } from 'vue'
 
 const signalingChannel = ref<SignalingChannel>()
-const rtcPeerConnection = inject<RTCPeerConnection>("rtcConnection")
-
+const rtcPeerConnection = inject<Ref<RTCPeerConnection>>("rtcConnection")
 onMounted(() => {
   if (signalingChannel.value) {
     signalingChannel.value.close()
   }
 
   signalingChannel.value = new SignalingChannel(me.ID)
-  signalingChannel.value.connect()
-
-  signalingChannel.value.onReceiveOffer = handleOffer
+  signalingChannel.value.connect(() => { })
+  signalingChannel.value.setOfferHandler((offer: Offer) => handleOffer(offer))
 })
 
 async function handleOffer(offer: Offer) {
-  rtcPeerConnection?.setRemoteDescription(new RTCSessionDescription({
+  console.log("OFFER: " + offer)
+  rtcPeerConnection?.value.setRemoteDescription(new RTCSessionDescription({
     type: offer.OfferType as RTCSdpType,
     sdp: offer.SDP
   }))
 
-  const answer = await rtcPeerConnection?.createAnswer()
+  const answer = await rtcPeerConnection?.value.createAnswer()
 
   if (answer) {
-    rtcPeerConnection?.setLocalDescription(answer)
+    rtcPeerConnection?.value.setLocalDescription(answer)
     signalingChannel.value?.sendAnswer(me.ID, offer.From, answer.type, answer.sdp || "")
   } else {
     console.log("Something went wrong!")
@@ -36,6 +35,6 @@ async function handleOffer(offer: Offer) {
 
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+    <h1>{{ me.ID }} - {{ me.DisplayName }}</h1>
   </div>
 </template>

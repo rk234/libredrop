@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { me } from '@/services/peer';
 import { SignalingChannel, type Answer } from '@/services/signaling';
-import { inject, ref } from 'vue';
+import { inject, ref, type Ref } from 'vue';
 
 const receiverID = ref<string>("")
-const rtcPeerConnection = inject<RTCPeerConnection>("rtcConnection")
+const rtcPeerConnection = inject<Ref<RTCPeerConnection>>("rtcConnection")
 
 function handleDrop(event: DragEvent) {
   if (!event.dataTransfer) return;
@@ -26,19 +26,26 @@ function handleDrop(event: DragEvent) {
 }
 
 function handleAnswer(answer: Answer) {
+  console.log("Received answer!")
+  rtcPeerConnection?.value.setRemoteDescription(new RTCSessionDescription({
+    type: answer.AnswerType as RTCSdpType,
+    sdp: answer.SDP
+  }))
 
+  // const channel = rtcPeerConnection?.value.createDataChannel("file-send-channel")
 }
 
 async function handleSend() {
+  console.log(receiverID.value)
   if (receiverID.value.trim().length > 0) {
-    const signalingChannel = new SignalingChannel(receiverID.value)
-    signalingChannel.connect()
+    const signalingChannel = new SignalingChannel(me.ID)
+    signalingChannel.connect(async () => {
+      const offer = await rtcPeerConnection?.value.createOffer()
+      rtcPeerConnection?.value.setLocalDescription(offer)
 
-    const offer = await rtcPeerConnection?.createOffer()
-    rtcPeerConnection?.setLocalDescription(offer)
-
-    signalingChannel.sendOffer(me.ID, offer?.type || "", offer?.sdp || "")
-    signalingChannel.onReceiveAnswer = handleAnswer
+      signalingChannel.sendOffer(me.ID, offer?.type || "", offer?.sdp || "")
+      signalingChannel.onReceiveAnswer = handleAnswer
+    })
   }
 }
 </script>
@@ -54,8 +61,8 @@ async function handleSend() {
       placeholder="Enter text to send"></textarea>
 
     <div class="flex flex-row gap-2">
-      <input :value="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
-      <button class="bg-emerald-600 p-2 rounded">Send</button>
+      <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
+      <button class="bg-emerald-600 p-2 rounded" @click="handleSend">Send</button>
     </div>
   </div>
 </template>
