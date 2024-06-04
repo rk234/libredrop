@@ -27,6 +27,7 @@ func SignalingChannel(c *websocket.Conn) {
 	for {
 		if mt, msg, err = c.ReadMessage(); err != nil {
 			log.Println("read: ", err)
+			state.DisconnectPeer(peerID)
 			break
 		}
 
@@ -50,9 +51,11 @@ func SignalingChannel(c *websocket.Conn) {
 			state.PutOffer(offer)
 
 			for receiver, conn := range state.PeerConnections {
-				log.Println("Broadcasting offer to ", receiver)
-				if err := conn.WriteJSON(sm); err != nil {
-					log.Println("err: ", err)
+				if receiver != peerID {
+					log.Println("Broadcasting offer to ", receiver)
+					if err := conn.WriteJSON(sm); err != nil {
+						log.Println("err: ", err)
+					}
 				}
 			}
 		case "answer":
@@ -64,6 +67,15 @@ func SignalingChannel(c *websocket.Conn) {
 
 			if err := state.GetConnection(answer.To).WriteJSON(sm); err != nil {
 				log.Println("err: ", err)
+			}
+		case "candidate":
+			for receiver, conn := range state.PeerConnections {
+				if receiver != peerID {
+					log.Println("Transmitting candidate to", receiver)
+					if err = conn.WriteMessage(mt, msg); err != nil {
+						log.Println("err: ", err)
+					}
+				}
 			}
 		default:
 			if err = c.WriteMessage(mt, msg); err != nil {

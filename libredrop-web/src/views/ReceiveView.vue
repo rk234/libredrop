@@ -1,34 +1,54 @@
 <script setup lang="ts">
-import { me } from '@/services/peer';
-import { SignalingChannel, type Offer } from '@/services/signaling';
+import { me } from '@/services/peer'
+import { SignalingChannel, type Offer } from '@/services/signaling'
 import { type Ref, inject, onMounted, ref } from 'vue'
 
 const signalingChannel = ref<SignalingChannel>()
-const rtcPeerConnection = inject<Ref<RTCPeerConnection>>("rtcConnection")
+const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 onMounted(() => {
+  rtcPeerConnection?.value.addEventListener('datachannel', (event) =>
+    handleDataChannel(event.channel)
+  )
+
   if (signalingChannel.value) {
     signalingChannel.value.close()
   }
 
   signalingChannel.value = new SignalingChannel(me.ID)
-  signalingChannel.value.connect(() => { })
+  signalingChannel.value.connect(() => {})
   signalingChannel.value.setOfferHandler((offer: Offer) => handleOffer(offer))
+
+  rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
+    if (e.candidate) {
+      signalingChannel.value?.sendIceCandidate(e.candidate)
+      rtcPeerConnection?.value.addIceCandidate(e.candidate)
+    }
+  }
+  signalingChannel.value.onReceiveCandidate = (c) => rtcPeerConnection?.value.addIceCandidate(c)
 })
 
+function handleDataChannel(channel: RTCDataChannel) {
+  channel.send('Hello from receiver')
+  channel.onmessage = (msg: MessageEvent<any>) => console.log(msg.data)
+}
+
 async function handleOffer(offer: Offer) {
-  console.log("OFFER: " + offer)
-  rtcPeerConnection?.value.setRemoteDescription(new RTCSessionDescription({
-    type: offer.OfferType as RTCSdpType,
-    sdp: offer.SDP
-  }))
+  console.log('OFFER: ')
+  console.log(offer)
+  await rtcPeerConnection?.value.setRemoteDescription(
+    new RTCSessionDescription({
+      type: offer.OfferType as RTCSdpType,
+      sdp: offer.SDP
+    })
+  )
 
   const answer = await rtcPeerConnection?.value.createAnswer()
 
   if (answer) {
     rtcPeerConnection?.value.setLocalDescription(answer)
-    signalingChannel.value?.sendAnswer(me.ID, offer.From, answer.type, answer.sdp || "")
+    signalingChannel.value?.sendAnswer(me.ID, offer.From, answer.type, answer.sdp || '')
   } else {
-    console.log("Something went wrong!")
+    console.log('Something went wrong!')
   }
 }
 </script>

@@ -1,7 +1,7 @@
-import { me, type Peer } from "./peer"
+import { me, type Peer } from './peer'
 
 export type SignalingMessage = {
-  MessageType: "connect" | "disconnect" | "offer" | "answer"
+  MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate'
   MessageData: any
 }
 
@@ -26,24 +26,27 @@ export class SignalingChannel {
   onPeerConnect?: (peer: Peer) => void
   onReceiveOffer?: (offer: Offer) => void
   onReceiveAnswer?: (answer: Answer) => void
+  onReceiveCandidate?: (candidate: RTCIceCandidate) => void
 
   constructor(receiverID: string) {
     this.receiverID = receiverID
-    this.onMessage = _ => { }
+    this.onMessage = (_) => { }
   }
 
   connect(onReady: () => void) {
-    this.socket = new WebSocket("ws://localhost:3000/channel/" + this.receiverID)
-    console.log("CHANNEL:")
-    console.log("ws://localhost:3000/channel/" + this.receiverID)
-    this.socket.onopen = _ => {
+    this.socket = new WebSocket('ws://localhost:3000/channel/' + this.receiverID)
+    console.log('CHANNEL:')
+    console.log('ws://localhost:3000/channel/' + this.receiverID)
+    this.socket.onopen = (_) => {
       this.sendMessage({
-        MessageType: "connect",
+        MessageType: 'connect',
         MessageData: me
       })
       onReady()
     }
-    this.socket.onmessage = this._handleMessage
+
+    const sc: SignalingChannel = this
+    this.socket.onmessage = (event: MessageEvent<any>) => this._handleMessage(sc, event)
   }
 
   setOfferHandler(handler: (offer: Offer) => void) {
@@ -54,38 +57,39 @@ export class SignalingChannel {
     this.onReceiveAnswer = handler
   }
 
-  _handleMessage(event: MessageEvent<any>) {
-    //TODO: this is pointing to the websocket, should pass in SC
+  _handleMessage(channel: SignalingChannel, event: MessageEvent<any>) {
     const sm = JSON.parse(event.data) as SignalingMessage
 
     switch (sm.MessageType) {
-      case "connect":
+      case 'connect':
         const peer = sm.MessageData as Peer
         if (peer.ID != me.ID) {
-          if (this.onPeerConnect) this.onPeerConnect(peer)
+          if (channel.onPeerConnect) channel.onPeerConnect(peer)
         }
         break
-      case "answer":
+      case 'answer':
         const answer = sm.MessageData as Answer
         if (answer.To == me.ID) {
-          if (this.onReceiveAnswer) this.onReceiveAnswer(answer)
+          if (channel.onReceiveAnswer) channel.onReceiveAnswer(answer)
         }
         break
-      case "offer":
-        console.log("RECEIVED MSG:")
-        console.log(sm)
-        console.log(this.onReceiveOffer)
+      case 'offer':
         const offer = sm.MessageData as Offer
         if (offer.From != me.ID) {
-          if (this.onReceiveOffer) this.onReceiveOffer(offer)
+          if (channel.onReceiveOffer) channel.onReceiveOffer(offer)
         }
+        break
+      case 'candidate':
+        console.log('CANDIDATE RECEIVED!')
+        const candidate = sm.MessageData as RTCIceCandidate
+        if (channel.onReceiveCandidate) channel.onReceiveCandidate(candidate)
         break
     }
   }
 
   close() {
     this.sendMessage({
-      MessageType: "disconnect",
+      MessageType: 'disconnect',
       MessageData: me
     })
     this.socket?.close()
@@ -95,13 +99,8 @@ export class SignalingChannel {
     this.socket?.send(JSON.stringify(sm))
   }
 
-  sendAnswer(
-    from: string,
-    to: string,
-    answerType: string,
-    sdp: string
-  ) {
-    let answer: Answer = {
+  sendAnswer(from: string, to: string, answerType: string, sdp: string) {
+    const answer: Answer = {
       From: from,
       To: to,
       AnswerType: answerType,
@@ -109,26 +108,28 @@ export class SignalingChannel {
     }
 
     this.sendMessage({
-      MessageType: "answer",
+      MessageType: 'answer',
       MessageData: answer
     })
   }
 
-  sendOffer(
-    from: string,
-    offerType: string,
-    sdp: string
-  ) {
-    let offer: Offer = {
+  sendOffer(from: string, offerType: string, sdp: string) {
+    const offer: Offer = {
       From: from,
       OfferType: offerType,
       SDP: sdp
     }
 
     this.sendMessage({
-      MessageType: "offer",
+      MessageType: 'offer',
       MessageData: offer
     })
   }
-}
 
+  sendIceCandidate(candidate: RTCIceCandidate) {
+    this.sendMessage({
+      MessageType: 'candidate',
+      MessageData: candidate.toJSON()
+    })
+  }
+}
