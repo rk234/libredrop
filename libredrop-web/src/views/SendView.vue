@@ -18,14 +18,38 @@ function handleAnswer(answer: Answer) {
   )
 }
 
+const CHUNK_SIZE = 16000;
+/*
+Send Protocol Byte Format:
+
+0: Message Type (byte) => 0 = Start File Header, 1 = File Data, 3 = End File Header
+======
+File data:
+1: Chunk Size in bytes
+1-1+ChunkSize: File data
+======
+Start File Header
+1: file name (null terminated string)
+2: file extension: (terminated string)
+
+======
+*/
+
 async function handleSend() {
   console.log(receiverID.value)
   if (receiverID.value.trim().length > 0) {
     const signalingChannel = new SignalingChannel(me.ID)
     const channel = rtcPeerConnection?.value.createDataChannel('file-send-channel')
-    console.log(channel)
+
+    const reader = new FileReader()
+    reader.addEventListener("error", err => console.log(err))
+    reader.addEventListener("abort", err => console.log("Abort: " + err))
+    reader.addEventListener("abort", err => console.log("Abort: " + err))
+
     channel?.addEventListener('open', (_) => {
-      console.log('CHANNEL OPENED')
+      console.log('DATA CHANNEL OPENED')
+      for (let file in files.value) {
+      }
       channel?.send('Hello from sender')
       channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
     })
@@ -49,6 +73,7 @@ async function handleSend() {
     })
   }
 }
+
 
 function handleFiles(files: File[]) {
   console.log(files)
