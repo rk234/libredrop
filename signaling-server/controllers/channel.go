@@ -51,7 +51,7 @@ func SignalingChannel(c *websocket.Conn) {
 			state.PutOffer(offer)
 
 			for receiver, conn := range state.PeerConnections {
-				if receiver != peerID {
+				if receiver == offer.To {
 					log.Println("Broadcasting offer to ", receiver)
 					if err := conn.WriteJSON(sm); err != nil {
 						log.Println("err: ", err)

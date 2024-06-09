@@ -18,6 +18,9 @@ export function sendFile(file: File, dataChannel: RTCDataChannel) {
 
       if (offset < file.size) {
         readChunk(file, reader, offset)
+      } else {
+        console.log("FINISHED")
+        dataChannel.send(createFileEndMessage())
       }
     }
   })
@@ -26,7 +29,7 @@ export function sendFile(file: File, dataChannel: RTCDataChannel) {
 }
 
 function readChunk(file: File, reader: FileReader, offset: number) {
-  const nextSlice = file.slice(offset, offset + CHUNK_SIZE)
+  const nextSlice = file.slice(offset, Math.min(offset + CHUNK_SIZE, file.size))
   reader.readAsArrayBuffer(nextSlice)
 }
 

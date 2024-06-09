@@ -14,6 +14,7 @@ export type Answer = {
 
 export type Offer = {
   From: string
+  To: string
   OfferType: string
   SDP: string
 }
@@ -113,9 +114,10 @@ export class SignalingChannel {
     })
   }
 
-  sendOffer(from: string, offerType: string, sdp: string) {
+  sendOffer(from: string, to: string, offerType: string, sdp: string) {
     const offer: Offer = {
       From: from,
+      To: to,
       OfferType: offerType,
       SDP: sdp
     }

@@ -2,6 +2,7 @@ package state
 
 type Offer struct {
 	From      string
+	To        string
 	OfferType string
 	SDP       string
 }

@@ -51,7 +51,7 @@ async function handleSend() {
       const offer = await rtcPeerConnection?.value.createOffer()
       await rtcPeerConnection?.value.setLocalDescription(offer)
 
-      signalingChannel.sendOffer(me.ID, offer?.type || '', offer?.sdp || '')
+      signalingChannel.sendOffer(me.ID, receiverID.value, offer?.type || '', offer?.sdp || '')
       signalingChannel.onReceiveAnswer = handleAnswer
       signalingChannel.onReceiveCandidate = (c) => {
         rtcPeerConnection?.value.addIceCandidate(c)
