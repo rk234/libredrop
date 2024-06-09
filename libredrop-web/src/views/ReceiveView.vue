@@ -2,6 +2,7 @@
 import { me } from '@/services/peer'
 import { SignalingChannel, type Offer } from '@/services/signaling'
 import { type Ref, inject, onMounted, ref } from 'vue'
+import { parseFileStartMessage } from '@/services/sendProtocol';
 
 const signalingChannel = ref<SignalingChannel>()
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
@@ -15,7 +16,7 @@ onMounted(() => {
   }
 
   signalingChannel.value = new SignalingChannel(me.ID)
-  signalingChannel.value.connect(() => {})
+  signalingChannel.value.connect(() => { })
   signalingChannel.value.setOfferHandler((offer: Offer) => handleOffer(offer))
 
   rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
@@ -29,7 +30,7 @@ onMounted(() => {
 
 function handleDataChannel(channel: RTCDataChannel) {
   channel.send('Hello from receiver')
-  channel.onmessage = (msg: MessageEvent<any>) => console.log(msg.data)
+  channel.onmessage = async (msg: MessageEvent<any>) => console.log(parseFileStartMessage(await (msg.data as Blob).arrayBuffer()))
 }
 
 async function handleOffer(offer: Offer) {

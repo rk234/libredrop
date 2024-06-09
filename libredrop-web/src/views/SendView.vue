@@ -3,6 +3,7 @@ import { me } from '@/services/peer'
 import { SignalingChannel, type Answer } from '@/services/signaling'
 import { inject, ref, type Ref } from 'vue'
 import FilePicker from "../components/FilePicker.vue"
+import { sendFile } from '@/services/sendProtocol';
 
 const receiverID = ref<string>('')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
@@ -19,21 +20,6 @@ function handleAnswer(answer: Answer) {
 }
 
 const CHUNK_SIZE = 16000;
-/*
-Send Protocol Byte Format:
-
-0: Message Type (byte) => 0 = Start File Header, 1 = File Data, 3 = End File Header
-======
-File data:
-1: Chunk Size in bytes
-1-1+ChunkSize: File data
-======
-Start File Header
-1: file name (null terminated string)
-2: file extension: (terminated string)
-
-======
-*/
 
 async function handleSend() {
   console.log(receiverID.value)
@@ -48,9 +34,10 @@ async function handleSend() {
 
     channel?.addEventListener('open', (_) => {
       console.log('DATA CHANNEL OPENED')
-      for (let file in files.value) {
+      for (let file of files.value) {
+        console.log(file)
+        sendFile(file, channel)
       }
-      channel?.send('Hello from sender')
       channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
     })
 
@@ -75,8 +62,8 @@ async function handleSend() {
 }
 
 
-function handleFiles(files: File[]) {
-  console.log(files)
+function handleFiles(uploaded: File[]) {
+  files.value = uploaded
 }
 </script>
 
