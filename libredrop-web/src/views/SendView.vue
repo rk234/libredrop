@@ -19,7 +19,6 @@ function handleAnswer(answer: Answer) {
   )
 }
 
-const CHUNK_SIZE = 16000;
 
 async function handleSend() {
   console.log(receiverID.value)
