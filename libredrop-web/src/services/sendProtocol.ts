@@ -1,4 +1,3 @@
-
 export function sendFile(file: File, dataChannel: RTCDataChannel) {
   dataChannel.send(createFileStartMessage(file.name, file.type))
 }
