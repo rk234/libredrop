@@ -5,7 +5,10 @@ import { type Ref, inject, onMounted, ref } from 'vue'
 import { messageType, parseFileDataMessage, parseFileStartMessage } from '@/services/sendProtocol';
 
 const signalingChannel = ref<SignalingChannel>()
+const status = ref<"awaiting" | "offered" | "receiving" | "done">("awaiting")
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
+const currentOffer = ref<Offer>()
+
 onMounted(() => {
   rtcPeerConnection?.value.addEventListener('datachannel', (event) =>
     handleDataChannel(event.channel)
@@ -46,7 +49,7 @@ function handleDataChannel(channel: RTCDataChannel) {
 
 async function handleOffer(offer: Offer) {
   console.log('OFFER: ')
-  console.log(offer)
+  currentOffer.value = offer
   await rtcPeerConnection?.value.setRemoteDescription(
     new RTCSessionDescription({
       type: offer.OfferType as RTCSdpType,
@@ -61,6 +64,18 @@ async function handleOffer(offer: Offer) {
     signalingChannel.value?.sendAnswer(me.ID, offer.From, answer.type, answer.sdp || '')
   } else {
     console.log('Failed to generate answer')
+  }
+}
+
+function acceptOffer() {
+
+}
+
+function rejectOffer() {
+  if (currentOffer.value) {
+    signalingChannel.value!!.sendRejection(currentOffer.value)
+  } else {
+    throw new Error("No offer to reject!")
   }
 }
 </script>
@@ -80,6 +95,20 @@ async function handleOffer(offer: Offer) {
             </path>
           </svg>
         </div>
+      </div>
+      <hr class="border border-gray-700 my-4" />
+      <div v-if="status == 'awaiting'" class="flex flex-col">
+      </div>
+      <div v-else-if="status == 'offered'" class="flex flex-col">
+        <h1>Received an offer from {{ currentOffer.From }}!</h1>
+        <div class="flex flex-row gap-2">
+          <button @click="acceptOffer">Accept</button>
+          <button @click="rejectOffer">Reject</button>
+        </div>
+      </div>
+      <div v-else-if="status == 'receiving'" class="flex flex-col">
+      </div>
+      <div v-else-if="status == 'done'" class="flex flex-col">
       </div>
     </div>
     <div class="bg-gray-900 rounded p-4">

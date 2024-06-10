@@ -1,7 +1,7 @@
 import { me, type Peer } from './peer'
 
 export type SignalingMessage = {
-  MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate'
+  MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate' | 'rejection'
   MessageData: any
 }
 
@@ -26,6 +26,7 @@ export class SignalingChannel {
 
   onPeerConnect?: (peer: Peer) => void
   onReceiveOffer?: (offer: Offer) => void
+  onReceiveRejection?: (rejectedOffer: Offer) => void
   onReceiveAnswer?: (answer: Answer) => void
   onReceiveCandidate?: (candidate: RTCIceCandidate) => void
 
@@ -85,6 +86,12 @@ export class SignalingChannel {
         const candidate = sm.MessageData as RTCIceCandidate
         if (channel.onReceiveCandidate) channel.onReceiveCandidate(candidate)
         break
+      case 'rejection':
+        console.log("OFFER REJECTED")
+        const rejectedOffer = sm.MessageData as Offer
+        if (rejectedOffer.From == me.ID) {
+          if (channel.onReceiveRejection) channel.onReceiveRejection(rejectedOffer)
+        }
     }
   }
 
@@ -132,6 +139,13 @@ export class SignalingChannel {
     this.sendMessage({
       MessageType: 'candidate',
       MessageData: candidate.toJSON()
+    })
+  }
+
+  sendRejection(offer: Offer) {
+    this.sendMessage({
+      MessageType: "rejection",
+      MessageData: offer
     })
   }
 }

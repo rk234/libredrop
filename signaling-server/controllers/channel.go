@@ -77,6 +77,21 @@ func SignalingChannel(c *websocket.Conn) {
 					}
 				}
 			}
+		case "rejection":
+			str, _ := json.Marshal(sm.MessageData)
+			var offer state.Offer
+			json.Unmarshal(str, &offer)
+
+			state.RemoveOffer(offer.From)
+
+			for receiver, conn := range state.PeerConnections {
+				if receiver == offer.From {
+					log.Println("Sending rejection to " + receiver)
+					if err = conn.WriteMessage(mt, msg); err != nil {
+						log.Println("err: ", err)
+					}
+				}
+			}
 		default:
 			if err = c.WriteMessage(mt, msg); err != nil {
 				log.Println("write: ", err)

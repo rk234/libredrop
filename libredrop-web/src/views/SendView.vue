@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { me } from '@/services/peer'
-import { SignalingChannel, type Answer } from '@/services/signaling'
+import { SignalingChannel, type Answer, type Offer } from '@/services/signaling'
 import { inject, ref, type Ref } from 'vue'
 import FilePicker from "../components/FilePicker.vue"
 import { sendFile } from '@/services/sendProtocol';
@@ -19,6 +19,11 @@ function handleAnswer(answer: Answer) {
   )
 }
 
+
+function handleRejection(rejectedOffer: Offer) {
+  console.log("OFFER REJECTED!")
+  console.log(rejectedOffer)
+}
 
 async function handleSend() {
   console.log(receiverID.value)
@@ -53,13 +58,13 @@ async function handleSend() {
 
       signalingChannel.sendOffer(me.ID, receiverID.value, offer?.type || '', offer?.sdp || '')
       signalingChannel.onReceiveAnswer = handleAnswer
+      signalingChannel.onReceiveRejection = handleRejection
       signalingChannel.onReceiveCandidate = (c) => {
         rtcPeerConnection?.value.addIceCandidate(c)
       }
     })
   }
 }
-
 
 function handleFiles(uploaded: File[]) {
   files.value = uploaded
