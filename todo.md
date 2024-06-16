@@ -5,3 +5,4 @@
 
 2. Add UI for when offer is rejected on sender side
 3. When transfer is done, add button to return to "awaiting offer" on receive side, reset everything
+4. Error handling
