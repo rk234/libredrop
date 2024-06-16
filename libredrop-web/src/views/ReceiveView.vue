@@ -2,12 +2,22 @@
 import { me } from '@/services/peer'
 import { SignalingChannel, type Offer } from '@/services/signaling'
 import { type Ref, inject, onMounted, ref } from 'vue'
-import { messageType, parseFileDataMessage, parseFileStartMessage } from '@/services/sendProtocol';
+import {
+  PartialFile,
+  messageType,
+  parseFileDataMessage,
+  parseFileStartMessage,
+  parseTransferStartMessage
+} from '@/services/sendProtocol'
 
 const signalingChannel = ref<SignalingChannel>()
-const status = ref<"awaiting" | "offered" | "receiving" | "done">("awaiting")
+const status = ref<'awaiting' | 'offered' | 'receiving' | 'done'>('awaiting')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const currentOffer = ref<Offer>()
+
+const numberOfFilesExpected = ref<number>()
+const receivedFiles = ref<File[]>([])
+const currentFile = ref<PartialFile>()
 
 onMounted(() => {
   rtcPeerConnection?.value.addEventListener('datachannel', (event) =>
@@ -19,7 +29,7 @@ onMounted(() => {
   }
 
   signalingChannel.value = new SignalingChannel(me.ID)
-  signalingChannel.value.connect(() => console.log("Connected to signaling channel!"))
+  signalingChannel.value.connect(() => console.log('Connected to signaling channel!'))
   signalingChannel.value.setOfferHandler((offer: Offer) => handleOffer(offer))
 
   rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
@@ -37,12 +47,32 @@ function handleDataChannel(channel: RTCDataChannel) {
     const buf = await (msg.data as Blob).arrayBuffer()
     const mt = messageType(buf)
 
-    if (mt == 0) { //START
-      console.log(parseFileStartMessage(buf))
-    } else if (mt == 1) { //DATA
-      console.log(parseFileDataMessage(buf))
-    } else if (mt == 2) { //END
-      console.log("END!")
+    if (mt == 0) {
+      //FILE START
+      const startMsg = parseFileStartMessage(buf)
+      status.value = 'receiving'
+      currentFile.value = new PartialFile(startMsg)
+    } else if (mt == 1) {
+      //DATA
+      const fileDataMsg = parseFileDataMessage(buf)
+      console.log(fileDataMsg)
+      currentFile.value!!.addChunk(fileDataMsg)
+
+      if (currentFile.value!!.isDone()) {
+        console.log('DONE!')
+        receivedFiles.value.push(currentFile.value!!.createFile())
+
+        if (receivedFiles.value.length == numberOfFilesExpected.value) {
+          console.log('RECEIVED ALL FILES!')
+          status.value = 'done'
+        }
+      }
+    } else if (mt == 3) {
+      //TRANSFER START
+      const tsMsg = parseTransferStartMessage(buf)
+      console.log('TRANSFER START')
+      console.log(tsMsg)
+      numberOfFilesExpected.value = tsMsg.numberOfFiles
     }
   }
 }
@@ -50,10 +80,15 @@ function handleDataChannel(channel: RTCDataChannel) {
 async function handleOffer(offer: Offer) {
   console.log('OFFER: ')
   currentOffer.value = offer
+  status.value = 'offered'
+}
+
+async function acceptOffer() {
+  if (!currentOffer.value) throw new Error('No offer to accept!')
   await rtcPeerConnection?.value.setRemoteDescription(
     new RTCSessionDescription({
-      type: offer.OfferType as RTCSdpType,
-      sdp: offer.SDP
+      type: currentOffer.value.OfferType as RTCSdpType,
+      sdp: currentOffer.value.SDP
     })
   )
 
@@ -61,21 +96,35 @@ async function handleOffer(offer: Offer) {
 
   if (answer) {
     rtcPeerConnection?.value.setLocalDescription(answer)
-    signalingChannel.value?.sendAnswer(me.ID, offer.From, answer.type, answer.sdp || '')
+    signalingChannel.value?.sendAnswer(
+      me.ID,
+      currentOffer.value.From,
+      answer.type,
+      answer.sdp || ''
+    )
   } else {
-    console.log('Failed to generate answer')
+    throw new Error('Failed to generate answer!')
   }
-}
-
-function acceptOffer() {
-
 }
 
 function rejectOffer() {
   if (currentOffer.value) {
     signalingChannel.value!!.sendRejection(currentOffer.value)
   } else {
-    throw new Error("No offer to reject!")
+    throw new Error('No offer to reject!')
+  }
+}
+
+function statusMessage(): string {
+  switch (status.value) {
+    case 'awaiting':
+      return 'Awaiting offer...'
+    case 'offered':
+      return 'Received an offer!'
+    case 'receiving':
+      return 'Receiving files...'
+    case 'done':
+      return 'Transfer Complete!'
   }
 }
 </script>
@@ -86,7 +135,7 @@ function rejectOffer() {
       <div class="flex flex-row items-center">
         <h1 class="font-bold flex-1">Status</h1>
         <div class="flex flex-row gap-2 items-center">
-          <p>Awaiting Offer...</p>
+          <p>{{ statusMessage() }}</p>
           <svg class="animate-spin h-6 w-6 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none"
             viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -97,22 +146,23 @@ function rejectOffer() {
         </div>
       </div>
       <hr class="border border-gray-700 my-4" />
-      <div v-if="status == 'awaiting'" class="flex flex-col">
-      </div>
+      <div v-if="status == 'awaiting'" class="flex flex-col"></div>
       <div v-else-if="status == 'offered'" class="flex flex-col">
-        <h1>Received an offer from {{ currentOffer.From }}!</h1>
+        <h1>Received an offer from {{ currentOffer?.From }}!</h1>
         <div class="flex flex-row gap-2">
           <button @click="acceptOffer">Accept</button>
           <button @click="rejectOffer">Reject</button>
         </div>
       </div>
       <div v-else-if="status == 'receiving'" class="flex flex-col">
+        Receiving... {{ currentFile && Math.round(currentFile.progress() * 100) }}%
       </div>
-      <div v-else-if="status == 'done'" class="flex flex-col">
-      </div>
+      <div v-else-if="status == 'done'" class="flex flex-col">Done</div>
     </div>
     <div class="bg-gray-900 rounded p-4">
-      <h1 class="font-bold"> Your Peer ID: <span class="font-mono">{{ me.ID }}</span></h1>
+      <h1 class="font-bold">
+        Your Peer ID: <span class="font-mono">{{ me.ID }}</span>
+      </h1>
     </div>
   </div>
 </template>

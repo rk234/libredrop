@@ -2,8 +2,8 @@
 import { me } from '@/services/peer'
 import { SignalingChannel, type Answer, type Offer } from '@/services/signaling'
 import { inject, ref, type Ref } from 'vue'
-import FilePicker from "../components/FilePicker.vue"
-import { sendFile } from '@/services/sendProtocol';
+import FilePicker from '../components/FilePicker.vue'
+import { createTransferStartMessage, sendFile } from '@/services/sendProtocol'
 
 const receiverID = ref<string>('')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
@@ -19,9 +19,8 @@ function handleAnswer(answer: Answer) {
   )
 }
 
-
 function handleRejection(rejectedOffer: Offer) {
-  console.log("OFFER REJECTED!")
+  console.log('OFFER REJECTED!')
   console.log(rejectedOffer)
 }
 
@@ -29,15 +28,18 @@ async function handleSend() {
   console.log(receiverID.value)
   if (receiverID.value.trim().length > 0) {
     const signalingChannel = new SignalingChannel(me.ID)
-    const channel = rtcPeerConnection?.value.createDataChannel('file-send-channel')
+    const channel = rtcPeerConnection?.value.createDataChannel('file-send-channel', {
+      ordered: true
+    })
 
     const reader = new FileReader()
-    reader.addEventListener("error", err => console.log(err))
-    reader.addEventListener("abort", err => console.log("Abort: " + err))
-    reader.addEventListener("abort", err => console.log("Abort: " + err))
+    reader.addEventListener('error', (err) => console.log(err))
+    reader.addEventListener('abort', (err) => console.log('Abort: ' + err))
+    reader.addEventListener('abort', (err) => console.log('Abort: ' + err))
 
     channel?.addEventListener('open', (_) => {
       console.log('DATA CHANNEL OPENED')
+      channel.send(createTransferStartMessage(files.value.length))
       for (let file of files.value) {
         console.log(file)
         sendFile(file, channel)
