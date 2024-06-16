@@ -76,9 +76,6 @@ function handleFiles(uploaded: File[]) {
 <template>
   <div class="flex flex-col gap-4">
     <FilePicker @filesUploaded="handleFiles" class="" />
-    <p class="text-center text-lg">or</p>
-    <textarea class="bg-gray-950 border-2 border-gray-800 p-2 min-h-28 text-gray-200 rounded-md"
-      placeholder="Enter text to send"></textarea>
 
     <div class="flex flex-row gap-2">
       <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
