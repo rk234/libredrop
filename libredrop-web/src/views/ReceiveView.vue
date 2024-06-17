@@ -38,7 +38,9 @@ onMounted(() => {
       rtcPeerConnection?.value.addIceCandidate(e.candidate)
     }
   }
-  signalingChannel.value.onReceiveCandidate = (c) => rtcPeerConnection?.value.addIceCandidate(c)
+  signalingChannel.value.onReceiveCandidate = (c) => {
+    if (rtcPeerConnection?.value.remoteDescription) rtcPeerConnection?.value.addIceCandidate(c)
+  }
 })
 
 function handleDataChannel(channel: RTCDataChannel) {
@@ -136,22 +138,48 @@ function statusMessage(): string {
         <h1 class="font-bold flex-1">Status</h1>
         <div class="flex flex-row gap-2 items-center">
           <p>{{ statusMessage() }}</p>
-          <svg class="animate-spin h-6 w-6 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
+          <svg
+            class="animate-spin h-6 w-6 text-emerald-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
         </div>
       </div>
       <hr class="border border-gray-700 my-4" />
       <div v-if="status == 'awaiting'" class="flex flex-col"></div>
-      <div v-else-if="status == 'offered'" class="flex flex-col">
-        <h1>Received an offer from {{ currentOffer?.From }}!</h1>
+      <div v-else-if="status == 'offered'" class="flex flex-col gap-4">
+        <h1>
+          Received an offer from <span class="font-mono font-bold">{{ currentOffer?.From }}</span
+          >!
+        </h1>
         <div class="flex flex-row gap-2">
-          <button @click="acceptOffer">Accept</button>
-          <button @click="rejectOffer">Reject</button>
+          <button
+            class="flex-1 p-2 transition text-center rounded border border-emerald-900 hover:bg-emerald-700"
+            @click="acceptOffer"
+          >
+            Accept
+          </button>
+          <button
+            class="flex-1 p-2 transition text-center rounded border border-red-900 hover:bg-red-700"
+            @click="rejectOffer"
+          >
+            Reject
+          </button>
         </div>
       </div>
       <div v-else-if="status == 'receiving'" class="flex flex-col">

@@ -4,10 +4,12 @@ import { SignalingChannel, type Answer, type Offer } from '@/services/signaling'
 import { inject, ref, type Ref } from 'vue'
 import FilePicker from '../components/FilePicker.vue'
 import { createTransferStartMessage, sendFile } from '@/services/sendProtocol'
+import SendProgress from '@/components/SendProgress.vue'
 
 const receiverID = ref<string>('')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
+const fileSendProgress = ref<number[]>([])
 
 function handleAnswer(answer: Answer) {
   console.log('Received answer!')
@@ -35,14 +37,19 @@ async function handleSend() {
     const reader = new FileReader()
     reader.addEventListener('error', (err) => console.log(err))
     reader.addEventListener('abort', (err) => console.log('Abort: ' + err))
-    reader.addEventListener('abort', (err) => console.log('Abort: ' + err))
 
-    channel?.addEventListener('open', (_) => {
+    channel?.addEventListener('open', async (_) => {
       console.log('DATA CHANNEL OPENED')
       channel.send(createTransferStartMessage(files.value.length))
+
+      let fileIdx = 0
       for (let file of files.value) {
         console.log(file)
-        sendFile(file, channel)
+        await sendFile(file, channel, (prog) => {
+          console.log(prog)
+          fileSendProgress.value!![fileIdx] = prog
+        })
+        fileIdx++
       }
       channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
     })
@@ -50,7 +57,8 @@ async function handleSend() {
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
       if (e.candidate) {
         signalingChannel.sendIceCandidate(e.candidate)
-        rtcPeerConnection?.value.addIceCandidate(e.candidate)
+        if (rtcPeerConnection?.value.remoteDescription)
+          rtcPeerConnection?.value.addIceCandidate(e.candidate)
       }
     }
 
@@ -70,15 +78,26 @@ async function handleSend() {
 
 function handleFiles(uploaded: File[]) {
   files.value = uploaded
+  fileSendProgress.value = files.value.map((_) => 0)
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
+    <SendProgress
+      v-if="files.length > 0"
+      :uploaded-files="files"
+      :upload-progress="fileSendProgress"
+    />
     <FilePicker @filesUploaded="handleFiles" class="" />
 
     <div class="flex flex-row gap-2">
-      <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID" />
+      <input
+        v-model="receiverID"
+        class="flex-1 rounded bg-gray-800 p-2"
+        type="text"
+        placeholder="Enter receiver ID"
+      />
       <button class="bg-emerald-600 p-2 rounded" @click="handleSend">Send</button>
     </div>
   </div>
