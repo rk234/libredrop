@@ -20,19 +20,11 @@ provide('rtcConnection', rtcPeerConnection)
           <p>Simple peer-to-peer file sharing</p>
         </div>
         <nav class="flex flex-row gap-2">
-          <RouterLink
-            class="transition flex-1 text-center p-2 rounded border border-emerald-900 hover:bg-emerald-700"
-            :class="{ 'bg-emerald-700': currentPage == 'send' }"
-            to="/send"
-          >
-            Send</RouterLink
-          >
-          <RouterLink
-            class="transition flex-1 text-center p-2 rounded border border-emerald-900 hover:bg-emerald-700"
-            :class="{ 'bg-emerald-700': currentPage == 'receive' }"
-            to="/receive"
-            >Receive</RouterLink
-          >
+          <RouterLink class="transition flex-1 text-center p-2 rounded border border-emerald-900 hover:bg-emerald-700"
+            :class="{ 'bg-emerald-700': currentPage == 'send' }" to="/send">
+            Send</RouterLink>
+          <RouterLink class="transition flex-1 text-center p-2 rounded border border-emerald-900 hover:bg-emerald-700"
+            :class="{ 'bg-emerald-700': currentPage == 'receive' }" to="/receive">Receive</RouterLink>
         </nav>
       </header>
 

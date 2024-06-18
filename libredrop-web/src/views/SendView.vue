@@ -33,9 +33,10 @@ async function handleSend() {
   status.value = 'awaiting-answer'
   if (receiverID.value.trim().length > 0) {
     const signalingChannel = new SignalingChannel(me.ID)
-    const channel = rtcPeerConnection?.value.createDataChannel('file-send-channel', {
+    const channel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
       ordered: true
     })
+    channel!!.binaryType = "arraybuffer"
 
     const reader = new FileReader()
     reader.addEventListener('error', (err) => console.log(err))
@@ -58,13 +59,12 @@ async function handleSend() {
       fileSendProgress.value = []
       status.value = 'ready'
       channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
+      channel.close()
     })
 
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
       if (e.candidate) {
         signalingChannel.sendIceCandidate(e.candidate)
-        if (rtcPeerConnection?.value.remoteDescription)
-          rtcPeerConnection?.value.addIceCandidate(e.candidate)
       }
     }
 
@@ -95,22 +95,13 @@ function removeFile(i: number) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <SendProgress
-      v-if="files.length > 0"
-      :uploaded-files="files"
-      :upload-progress="fileSendProgress"
-      @file-removed="removeFile"
-    />
+    <SendProgress v-if="files.length > 0" :uploaded-files="files" :upload-progress="fileSendProgress"
+      @file-removed="removeFile" />
     <FilePicker @filesUploaded="handleFiles" class="" />
 
     <div class="flex flex-row gap-2">
-      <input
-        v-model="receiverID"
-        class="flex-1 rounded bg-gray-800 p-2"
-        type="text"
-        placeholder="Enter receiver ID"
-        :disabled="status != 'ready'"
-      />
+      <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
+        :disabled="status != 'ready'" />
       <button class="bg-emerald-600 p-2 rounded" @click="handleSend" :disabled="status != 'ready'">
         Send
       </button>
