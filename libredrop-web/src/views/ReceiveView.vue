@@ -2,6 +2,7 @@
 import { me } from '@/services/peer'
 import { SignalingChannel, type Offer } from '@/services/signaling'
 import { type Ref, inject, onMounted, ref } from 'vue'
+import ReceiveProgress from '@/components/ReceiveProgress.vue'
 import {
   PartialFile,
   messageType,
@@ -63,6 +64,7 @@ function handleDataChannel(channel: RTCDataChannel) {
       if (currentFile.value!!.isDone()) {
         console.log('DONE!')
         receivedFiles.value.push(currentFile.value!!.createFile())
+        currentFile.value = undefined
 
         if (receivedFiles.value.length == numberOfFilesExpected.value) {
           console.log('RECEIVED ALL FILES!')
@@ -161,7 +163,9 @@ function statusMessage(): string {
         </div>
       </div>
       <hr class="border border-gray-700 my-4" />
-      <div v-if="status == 'awaiting'" class="flex flex-col"></div>
+      <div v-if="status == 'awaiting'" class="flex items-center flex-col">
+        <p>Pull up libredrop on another device to transfer files!</p>
+      </div>
       <div v-else-if="status == 'offered'" class="flex flex-col gap-4">
         <h1>
           Received an offer from <span class="font-mono font-bold">{{ currentOffer?.From }}</span
@@ -182,10 +186,9 @@ function statusMessage(): string {
           </button>
         </div>
       </div>
-      <div v-else-if="status == 'receiving'" class="flex flex-col">
-        Receiving... {{ currentFile && Math.round(currentFile.progress() * 100) }}%
+      <div v-else-if="status == 'receiving' || status == 'done'" class="flex flex-col">
+        <ReceiveProgress :files-received="receivedFiles" :current-file="currentFile" />
       </div>
-      <div v-else-if="status == 'done'" class="flex flex-col">Done</div>
     </div>
     <div class="bg-gray-900 rounded p-4">
       <h1 class="font-bold">

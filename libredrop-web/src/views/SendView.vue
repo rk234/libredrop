@@ -11,6 +11,8 @@ const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
 const fileSendProgress = ref<number[]>([])
 
+const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending'>('ready')
+
 function handleAnswer(answer: Answer) {
   console.log('Received answer!')
   rtcPeerConnection?.value.setRemoteDescription(
@@ -28,6 +30,7 @@ function handleRejection(rejectedOffer: Offer) {
 
 async function handleSend() {
   console.log(receiverID.value)
+  status.value = 'awaiting-answer'
   if (receiverID.value.trim().length > 0) {
     const signalingChannel = new SignalingChannel(me.ID)
     const channel = rtcPeerConnection?.value.createDataChannel('file-send-channel', {
@@ -51,6 +54,9 @@ async function handleSend() {
         })
         fileIdx++
       }
+      files.value = []
+      fileSendProgress.value = []
+      status.value = 'ready'
       channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
     })
 
@@ -80,6 +86,11 @@ function handleFiles(uploaded: File[]) {
   files.value = uploaded
   fileSendProgress.value = files.value.map((_) => 0)
 }
+
+function removeFile(i: number) {
+  files.value.splice(i, 1)
+  fileSendProgress.value.splice(i, 1)
+}
 </script>
 
 <template>
@@ -88,6 +99,7 @@ function handleFiles(uploaded: File[]) {
       v-if="files.length > 0"
       :uploaded-files="files"
       :upload-progress="fileSendProgress"
+      @file-removed="removeFile"
     />
     <FilePicker @filesUploaded="handleFiles" class="" />
 
@@ -97,8 +109,11 @@ function handleFiles(uploaded: File[]) {
         class="flex-1 rounded bg-gray-800 p-2"
         type="text"
         placeholder="Enter receiver ID"
+        :disabled="status != 'ready'"
       />
-      <button class="bg-emerald-600 p-2 rounded" @click="handleSend">Send</button>
+      <button class="bg-emerald-600 p-2 rounded" @click="handleSend" :disabled="status != 'ready'">
+        Send
+      </button>
     </div>
   </div>
 </template>
