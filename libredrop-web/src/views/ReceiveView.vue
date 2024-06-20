@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { me } from '@/services/peer'
-import { SignalingChannel, type Offer } from '@/services/signaling'
+import { me } from '@/transfer/peer'
+import { SignalingChannel, type Offer } from '@/signaling/signaling'
 import { type Ref, inject, onMounted, ref } from 'vue'
 import ReceiveProgress from '@/components/ReceiveProgress.vue'
 import {
-  PartialFile,
   messageType,
   parseFileDataMessage,
   parseFileStartMessage,
   parseTransferStartMessage
-} from '@/services/sendProtocol'
+} from '@/transfer/messages'
+import { PartialFile } from '@/transfer/partialFile'
 
 const signalingChannel = ref<SignalingChannel>()
 const status = ref<'awaiting' | 'offered' | 'receiving' | 'done'>('awaiting')
@@ -45,15 +45,15 @@ onMounted(() => {
 
 function handleDataChannel(channel: RTCDataChannel) {
   channel.send('Hello from receiver')
-  channel.binaryType = "arraybuffer"
+  channel.binaryType = 'arraybuffer'
   channel.onmessage = (msg: MessageEvent<any>) => {
-    const buf = (msg.data as ArrayBuffer)
+    const buf = msg.data as ArrayBuffer
     const mt = messageType(buf)
 
     if (mt == 0) {
       //FILE START
       const startMsg = parseFileStartMessage(buf)
-      console.log("START")
+      console.log('START')
       console.log(startMsg)
       status.value = 'receiving'
       currentFile.value = new PartialFile(startMsg)

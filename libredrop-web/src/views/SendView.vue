@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { me } from '@/services/peer'
-import { SignalingChannel, type Answer, type Offer } from '@/services/signaling'
+import { me } from '@/transfer/peer'
+import { SignalingChannel, type Answer, type Offer } from '@/signaling/signaling'
 import { inject, ref, type Ref } from 'vue'
 import FilePicker from '../components/FilePicker.vue'
-import { createTransferStartMessage, sendFile } from '@/services/sendProtocol'
+import { sendFile } from '@/transfer/sendProtocol'
 import SendProgress from '@/components/SendProgress.vue'
+import { createTransferStartMessage } from '@/transfer/messages'
 
 const receiverID = ref<string>('')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
@@ -36,7 +37,7 @@ async function handleSend() {
     const channel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
       ordered: true
     })
-    channel!!.binaryType = "arraybuffer"
+    channel!!.binaryType = 'arraybuffer'
 
     const reader = new FileReader()
     reader.addEventListener('error', (err) => console.log(err))

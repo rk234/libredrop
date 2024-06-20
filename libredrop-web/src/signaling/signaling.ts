@@ -1,4 +1,4 @@
-import { me, type Peer } from './peer'
+import { me, type Peer } from '../transfer/peer'
 
 export type SignalingMessage = {
   MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate' | 'rejection'
@@ -87,7 +87,7 @@ export class SignalingChannel {
         if (channel.onReceiveCandidate) channel.onReceiveCandidate(candidate)
         break
       case 'rejection':
-        console.log("OFFER REJECTED")
+        console.log('OFFER REJECTED')
         const rejectedOffer = sm.MessageData as Offer
         if (rejectedOffer.From == me.ID) {
           if (channel.onReceiveRejection) channel.onReceiveRejection(rejectedOffer)
@@ -144,7 +144,7 @@ export class SignalingChannel {
 
   sendRejection(offer: Offer) {
     this.sendMessage({
-      MessageType: "rejection",
+      MessageType: 'rejection',
       MessageData: offer
     })
   }
