@@ -1,17 +1,17 @@
 import type { FileDataMessage } from './messages'
 
 export default class SendQueue {
-  queue: FileDataMessage[]
+  queue: ArrayBuffer[]
 
   constructor() {
     this.queue = []
   }
 
-  offer(fdm: FileDataMessage) {
+  offer(fdm: ArrayBuffer) {
     this.queue.push(fdm)
   }
 
-  poll(): FileDataMessage {
+  poll(): ArrayBuffer {
     return this.queue.shift()!!
   }
 

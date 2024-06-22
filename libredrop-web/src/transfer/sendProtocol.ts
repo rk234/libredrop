@@ -1,4 +1,5 @@
 import { createFileDataMessage, createFileEndMessage, createFileStartMessage } from './messages'
+import SendQueue from './sendQueue'
 
 const CHUNK_SIZE = 16000
 
@@ -17,11 +18,15 @@ export async function sendFile(
     reader.addEventListener('error', (error) => console.log('Error reading file! ' + error))
     reader.addEventListener('abort', (event) => console.log('File read aborted! ' + event))
     let chunkIndex = 0
+
+    const sendQueue = new SendQueue()
     reader.addEventListener('load', (event) => {
       if (event.target?.result) {
         const buf = event.target.result as ArrayBuffer
         const message = createFileDataMessage(buf.byteLength, chunkIndex, buf)
         offset += buf.byteLength
+
+        sendQueue.offer(message)
 
         dataChannel.send(message)
 
@@ -37,6 +42,14 @@ export async function sendFile(
       }
     })
 
+    // dataChannel.addEventListener("bufferedamountlow", () => {
+    //   while (dataChannel.bufferedAmount < dataChannel.bufferedAmountLowThreshold) {
+    //     //TODO
+    //   }
+    //
+    //   console.log("LOW!")
+    // })
+    //
     readChunk(file, reader, offset)
   })
 }
