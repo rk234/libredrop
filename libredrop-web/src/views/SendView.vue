@@ -38,6 +38,7 @@ async function handleSend() {
       ordered: true
     })
     channel!!.binaryType = 'arraybuffer'
+    channel.bufferedAmountLowThreshold = 65535 //64kb
 
     const reader = new FileReader()
     reader.addEventListener('error', (err) => console.log(err))
