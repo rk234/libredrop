@@ -87,6 +87,7 @@ async function handleOffer(offer: Offer) {
   console.log('OFFER: ')
   currentOffer.value = offer
   status.value = 'offered'
+  //TODO: Reset necessary state to prepare for new transfer, keep files
 }
 
 async function acceptOffer() {

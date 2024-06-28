@@ -32,6 +32,7 @@ function handleRejection(rejectedOffer: Offer) {
 async function handleSend() {
   console.log(receiverID.value)
   status.value = 'awaiting-answer'
+  //TODO: Reset necessary state to prepare for new transfer
   if (receiverID.value.trim().length > 0) {
     const signalingChannel = new SignalingChannel(me.ID)
     const channel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
