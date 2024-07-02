@@ -117,6 +117,7 @@ async function acceptOffer() {
 function rejectOffer() {
   if (currentOffer.value) {
     signalingChannel.value!!.sendRejection(currentOffer.value)
+    status.value = 'awaiting'
   } else {
     throw new Error('No offer to reject!')
   }

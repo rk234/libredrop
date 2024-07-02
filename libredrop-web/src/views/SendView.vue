@@ -3,6 +3,7 @@ import { me } from '@/transfer/peer'
 import { SignalingChannel, type Answer, type Offer } from '@/signaling/signaling'
 import { inject, ref, type Ref } from 'vue'
 import FilePicker from '../components/FilePicker.vue'
+import MessageModal from '../components/MessageModal.vue'
 import { sendFile } from '@/transfer/sendProtocol'
 import SendProgress from '@/components/SendProgress.vue'
 import { createTransferStartMessage } from '@/transfer/messages'
@@ -11,6 +12,9 @@ const receiverID = ref<string>('')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
 const fileSendProgress = ref<number[]>([])
+
+let signalingChannel: SignalingChannel
+let dataChannel: RTCDataChannel
 
 const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending'>('ready')
 
@@ -27,6 +31,9 @@ function handleAnswer(answer: Answer) {
 function handleRejection(rejectedOffer: Offer) {
   console.log('OFFER REJECTED!')
   console.log(rejectedOffer)
+  signalingChannel.close()
+  dataChannel.close()
+  status.value = 'rejected'
 }
 
 async function handleSend() {
@@ -34,25 +41,25 @@ async function handleSend() {
   status.value = 'awaiting-answer'
   //TODO: Reset necessary state to prepare for new transfer
   if (receiverID.value.trim().length > 0) {
-    const signalingChannel = new SignalingChannel(me.ID)
-    const channel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
+    signalingChannel = new SignalingChannel(me.ID)
+    dataChannel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
       ordered: true
     })
-    channel!!.binaryType = 'arraybuffer'
-    channel.bufferedAmountLowThreshold = 65535 //64kb
+    dataChannel.binaryType = 'arraybuffer'
+    dataChannel.bufferedAmountLowThreshold = 65535 //64kb
 
     const reader = new FileReader()
     reader.addEventListener('error', (err) => console.log(err))
     reader.addEventListener('abort', (err) => console.log('Abort: ' + err))
 
-    channel?.addEventListener('open', async (_) => {
+    dataChannel.addEventListener('open', async (_) => {
       console.log('DATA CHANNEL OPENED')
-      channel.send(createTransferStartMessage(files.value.length))
+      dataChannel.send(createTransferStartMessage(files.value.length))
 
       let fileIdx = 0
       for (let file of files.value) {
         console.log(file)
-        await sendFile(file, channel, (prog) => {
+        await sendFile(file, dataChannel, (prog) => {
           console.log(prog)
           fileSendProgress.value!![fileIdx] = prog
         })
@@ -61,8 +68,8 @@ async function handleSend() {
       files.value = []
       fileSendProgress.value = []
       status.value = 'ready'
-      channel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
-      channel.close()
+      dataChannel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
+      dataChannel.close()
     })
 
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
@@ -94,9 +101,16 @@ function removeFile(i: number) {
   files.value.splice(i, 1)
   fileSendProgress.value.splice(i, 1)
 }
+
+function handleModalClose() {
+  status.value = 'ready'
+}
 </script>
 
 <template>
+  <MessageModal v-if="status == 'rejected'" title="Send offer rejected by peer!"
+    message="Your send offer was rejected by your peer. Make sure the peer id you entered matches exactly with your intended recepient and try again!"
+    @close="handleModalClose" />
   <div class="flex flex-col gap-4">
     <SendProgress v-if="files.length > 0" :uploaded-files="files" :upload-progress="fileSendProgress"
       @file-removed="removeFile" />

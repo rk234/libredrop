@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"libredrop/signal/controllers"
+	"log"
+	"os"
+
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
-	"libredrop/signal/controllers"
 )
 
 func main() {
@@ -21,5 +25,11 @@ func main() {
 	})
 
 	app.Get("/channel/:id", websocket.New(controllers.SignalingChannel))
-	app.Listen(":3000")
+
+	if len(os.Args) == 1 {
+		app.Listen(":3000")
+	} else {
+		log.Println(fmt.Sprint(os.Args[1], ":3000"))
+		app.Listen(fmt.Sprint(os.Args[1], ":3000"))
+	}
 }

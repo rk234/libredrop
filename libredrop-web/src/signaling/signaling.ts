@@ -36,7 +36,7 @@ export class SignalingChannel {
   }
 
   connect(onReady: () => void) {
-    this.socket = new WebSocket('ws://localhost:3000/channel/' + this.receiverID)
+    this.socket = new WebSocket('ws://192.168.0.110:3000/channel/' + this.receiverID)
     console.log('CHANNEL:')
     console.log('ws://localhost:3000/channel/' + this.receiverID)
     this.socket.onopen = (_) => {
