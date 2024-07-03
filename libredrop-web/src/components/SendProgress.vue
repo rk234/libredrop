@@ -19,10 +19,8 @@ function removeFile(index: number) {
 <template>
   <h1 class="text-xl font-bold">Files to send</h1>
   <ul class="flex flex-col gap-2">
-    <li
-      class="p-2 border border-gray-800 bg-gray-900 items-center rounded flex flex-row gap-2"
-      v-for="(file, index) in uploadedFiles"
-    >
+    <li class="p-2 border border-gray-800 bg-gray-900 items-center rounded flex flex-row gap-2"
+      v-for="(file, index) in uploadedFiles">
       <div class="flex-1 flex gap-4 flex-row">
         <div class="flex flex-1 flex-col">
           <h2 class="text-lg font-bold">{{ file.name }}</h2>
@@ -32,14 +30,12 @@ function removeFile(index: number) {
             {{ prettyBytes(file.size) }}
           </p>
           <div class="h-2 bg-gray-700 rounded-full overflow-hidden mt-2">
-            <div
-              :style="{ width: `${Math.round(uploadProgress[index] * 100)}%` }"
-              class="h-full bg-emerald-600"
-              :class="uploadProgress[index] < 1 && 'animate-pulse'"
-            ></div>
+            <div :style="{ width: `${Math.round(uploadProgress[index] * 100)}%` }" class="h-full bg-emerald-600"
+              :class="uploadProgress[index] < 1 && 'animate-pulse'"></div>
           </div>
         </div>
-        <button class="bg-red-700 p-2 rounded hover:bg-red-600" @click="() => removeFile(index)">
+        <button v-if="uploadProgress[index] == 0" class="bg-red-700 p-2 rounded hover:bg-red-600"
+          @click="() => removeFile(index)">
           Don't Send
         </button>
       </div>

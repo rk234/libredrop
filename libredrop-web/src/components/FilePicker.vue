@@ -47,6 +47,15 @@ function handleInputElementChange(event: Event) {
     emit("filesUploaded", files.value)
   }
 }
+
+function clear() {
+  if (inputBox.value) inputBox.value.value = ''
+  files.value = []
+}
+
+defineExpose({
+  clear
+})
 </script>
 
 <template>

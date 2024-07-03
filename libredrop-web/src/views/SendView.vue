@@ -13,6 +13,8 @@ const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
 const fileSendProgress = ref<number[]>([])
 
+const filePicker = ref<InstanceType<typeof FilePicker> | null>(null)
+
 let signalingChannel: SignalingChannel
 let dataChannel: RTCDataChannel
 
@@ -72,6 +74,7 @@ async function handleSend() {
       status.value = 'ready'
       dataChannel.close()
       signalingChannel.close()
+      filePicker.value?.clear()
 
       rtcPeerConnection!!.value.close()
       rtcPeerConnection!!.value = new RTCPeerConnection()
@@ -119,7 +122,7 @@ function handleModalClose() {
   <div class="flex flex-col gap-4">
     <SendProgress v-if="files.length > 0" :uploaded-files="files" :upload-progress="fileSendProgress"
       @file-removed="removeFile" />
-    <FilePicker @filesUploaded="handleFiles" class="" />
+    <FilePicker ref="filePicker" @filesUploaded="handleFiles" class="" />
 
     <div class="flex flex-row gap-2">
       <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
