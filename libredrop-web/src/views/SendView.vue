@@ -65,11 +65,16 @@ async function handleSend() {
         })
         fileIdx++
       }
+
+      //cleaning up
       files.value = []
       fileSendProgress.value = []
       status.value = 'ready'
-      dataChannel!.onmessage = (m: MessageEvent<any>) => console.log(m.data)
       dataChannel.close()
+      signalingChannel.close()
+
+      rtcPeerConnection!!.value.close()
+      rtcPeerConnection!!.value = new RTCPeerConnection()
     })
 
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {

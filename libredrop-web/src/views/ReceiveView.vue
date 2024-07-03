@@ -11,7 +11,7 @@ import {
 } from '@/transfer/messages'
 import { PartialFile } from '@/transfer/partialFile'
 
-const signalingChannel = ref<SignalingChannel>()
+let signalingChannel: SignalingChannel
 const status = ref<'awaiting' | 'offered' | 'receiving' | 'done'>('awaiting')
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const currentOffer = ref<Offer>()
@@ -25,20 +25,20 @@ onMounted(() => {
     handleDataChannel(event.channel)
   )
 
-  if (signalingChannel.value) {
-    signalingChannel.value.close()
+  if (signalingChannel) {
+    signalingChannel.close()
   }
 
-  signalingChannel.value = new SignalingChannel(me.ID)
-  signalingChannel.value.connect(() => console.log('Connected to signaling channel!'))
-  signalingChannel.value.setOfferHandler((offer: Offer) => handleOffer(offer))
+  signalingChannel = new SignalingChannel(me.ID)
+  signalingChannel.connect(() => console.log('Connected to signaling channel!'))
+  signalingChannel.setOfferHandler((offer: Offer) => handleOffer(offer))
 
   rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
     if (e.candidate) {
-      signalingChannel.value?.sendIceCandidate(e.candidate)
+      signalingChannel.sendIceCandidate(e.candidate)
     }
   }
-  signalingChannel.value.onReceiveCandidate = (c) => {
+  signalingChannel.onReceiveCandidate = (c) => {
     if (rtcPeerConnection?.value.remoteDescription) rtcPeerConnection?.value.addIceCandidate(c)
   }
 })
@@ -103,7 +103,7 @@ async function acceptOffer() {
 
   if (answer) {
     rtcPeerConnection?.value.setLocalDescription(answer)
-    signalingChannel.value?.sendAnswer(
+    signalingChannel.sendAnswer(
       me.ID,
       currentOffer.value.From,
       answer.type,
@@ -116,7 +116,7 @@ async function acceptOffer() {
 
 function rejectOffer() {
   if (currentOffer.value) {
-    signalingChannel.value!!.sendRejection(currentOffer.value)
+    signalingChannel.sendRejection(currentOffer.value)
     status.value = 'awaiting'
   } else {
     throw new Error('No offer to reject!')
