@@ -25,6 +25,10 @@ func main() {
 	})
 
 	app.Get("/channel/:id", websocket.New(controllers.SignalingChannel))
+	app.Post("/discovery", func(c *fiber.Ctx) error {
+
+		return c.Next()
+	})
 
 	if len(os.Args) == 1 {
 		app.Listen(":3000")
