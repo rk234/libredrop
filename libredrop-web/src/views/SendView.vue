@@ -57,6 +57,7 @@ async function handleSend() {
     dataChannel.addEventListener('open', async (_) => {
       console.log('DATA CHANNEL OPENED')
       dataChannel.send(createTransferStartMessage(files.value.length))
+      status.value = 'sending'
 
       let fileIdx = 0
       for (let file of files.value) {
@@ -124,12 +125,24 @@ function handleModalClose() {
       @file-removed="removeFile" />
     <FilePicker ref="filePicker" @filesUploaded="handleFiles" class="" />
 
-    <div class="flex flex-row gap-2">
+    <div v-if="status == 'ready'" class="flex flex-row gap-2">
       <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
         :disabled="status != 'ready'" />
       <button class="bg-emerald-600 p-2 rounded" @click="handleSend" :disabled="status != 'ready'">
         Send
       </button>
+    </div>
+    <div v-if="status == 'awaiting-answer'" class="rounded bg-gray-800 p-4 flex flex-row gap-2">
+      <p class="flex-1">
+        Awaiting an answer from peer <span class="font-mono">{{ receiverID }}</span>
+      </p>
+      <svg class="animate-spin h-6 w-6 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+      </svg>
     </div>
   </div>
 </template>
