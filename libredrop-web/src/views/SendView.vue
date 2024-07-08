@@ -123,7 +123,7 @@ function handleModalClose() {
   <div class="flex flex-col gap-4">
     <SendProgress v-if="files.length > 0" :uploaded-files="files" :upload-progress="fileSendProgress"
       @file-removed="removeFile" />
-    <FilePicker ref="filePicker" @filesUploaded="handleFiles" class="" />
+    <FilePicker v-if="status != 'sending'" ref="filePicker" @filesUploaded="handleFiles" class="" />
 
     <div v-if="status == 'ready'" class="flex flex-row gap-2">
       <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
