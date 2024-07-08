@@ -92,6 +92,7 @@ async function handleOffer(offer: Offer) {
 
 async function acceptOffer() {
   if (!currentOffer.value) throw new Error('No offer to accept!')
+
   await rtcPeerConnection?.value.setRemoteDescription(
     new RTCSessionDescription({
       type: currentOffer.value.OfferType as RTCSdpType,

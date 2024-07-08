@@ -23,19 +23,25 @@ export async function sendFile(
         const buf = event.target.result as ArrayBuffer
         const message = createFileDataMessage(buf.byteLength, chunkIndex, buf)
         offset += buf.byteLength
+        progressCallback(offset / file.size)
 
         dataChannel.send(message)
 
         if (offset >= file.size) {
-          console.log('FINISHED')
-          dataChannel.send(createFileEndMessage())
-          resolve(file.name)
         } else if (dataChannel.bufferedAmount < dataChannel.bufferedAmountLowThreshold) {
           readChunk(file, reader, offset)
         }
 
-        progressCallback(offset / file.size)
         chunkIndex++
+      }
+
+    })
+
+    reader.addEventListener('loadend', event => {
+      if (offset >= file.size) {
+        console.log('FINISHED')
+        dataChannel.send(createFileEndMessage())
+        resolve(file.name)
       }
     })
 

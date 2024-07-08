@@ -19,6 +19,7 @@ export class PartialFile {
   addChunk(chunk: FileDataMessage) {
     this.receivedChunks.push(chunk)
     this.receivedBytes += chunk.chunkSize
+    console.log("Received " + this.receivedBytes + " of " + this.size + " bytes!");
   }
 
   isDone(): boolean {
