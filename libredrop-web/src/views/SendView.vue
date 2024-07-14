@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { me } from '@/transfer/peer'
-import { SignalingChannel, type Answer, type Offer } from '@/signaling/signaling'
-import { inject, ref, type Ref } from 'vue'
+import { SERVER_DOMAIN_HTTP, SignalingChannel, type Answer, type Offer } from '@/signaling/signaling'
+import { computed, inject, ref, type Ref } from 'vue'
 import FilePicker from '../components/FilePicker.vue'
 import MessageModal from '../components/MessageModal.vue'
 import { sendFile } from '@/transfer/sendProtocol'
 import SendProgress from '@/components/SendProgress.vue'
 import { createTransferStartMessage } from '@/transfer/messages'
+import axios from 'axios'
 
 const receiverID = ref<string>('')
+const discoveredPeers = ref<string[]>([])
+const matchedPeers = computed<string[]>(() => discoveredPeers.value.filter(p => p.includes(receiverID.value)))
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
 const fileSendProgress = ref<number[]>([])
@@ -17,6 +20,7 @@ const filePicker = ref<InstanceType<typeof FilePicker> | null>(null)
 
 let signalingChannel: SignalingChannel
 let dataChannel: RTCDataChannel
+let discoveryReqController: AbortController
 
 const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending'>('ready')
 
@@ -114,6 +118,13 @@ function removeFile(i: number) {
 function handleModalClose() {
   status.value = 'ready'
 }
+
+async function handlePeerIDInput() {
+  if (discoveryReqController) discoveryReqController.abort()
+  discoveryReqController = new AbortController()
+  const data = (await axios.get(SERVER_DOMAIN_HTTP + "/discovery/find/" + me.ID, { signal: discoveryReqController.signal })).data as string
+  discoveredPeers.value = data.split(",")
+}
 </script>
 
 <template>
@@ -125,12 +136,39 @@ function handleModalClose() {
       @file-removed="removeFile" />
     <FilePicker v-if="status != 'sending'" ref="filePicker" @filesUploaded="handleFiles" class="" />
 
-    <div v-if="status == 'ready'" class="flex flex-row gap-2">
-      <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
-        :disabled="status != 'ready'" />
-      <button class="bg-emerald-600 p-2 rounded" @click="handleSend" :disabled="status != 'ready'">
-        Send
-      </button>
+    <div class="relative">
+      <div v-if="status == 'ready'" class="flex flex-row gap-2">
+        <input v-model="receiverID" class="flex-1 rounded bg-gray-800 p-2" type="text" placeholder="Enter receiver ID"
+          :disabled="status != 'ready'" @input="handlePeerIDInput" />
+        <button
+          class="bg-emerald-400 text-gray-900 font-bold disabled:bg-gray-800 disabled:text-gray-200 p-2 rounded flex flex-row gap-2 items-center"
+          @click="handleSend" :disabled="status != 'ready' || !discoveredPeers.includes(receiverID)">
+          <p>
+            Send
+          </p>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+            stroke="currentColor" class="size-4">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+          </svg>
+
+        </button>
+
+      </div>
+      <div v-if="status == 'ready' && receiverID.trim().length > 0"
+        class="absolute top-12 left-0 p-2 right-0 rounded bg-gray-800">
+        <ul v-if="matchedPeers.length > 0" class="flex flex-col justify-center gap-2">
+          <button class="flex flex-row gap-2 hover:bg-gray-700 p-2 rounded" v-for="peer in matchedPeers"
+            @click="() => receiverID = peer">
+            <div class="rounded-full bg-emerald-400 p-1 text-xs text-gray-900 font-bold">Online</div>
+            <span>
+              {{ peer }}
+            </span>
+          </button>
+        </ul>
+        <p v-if="matchedPeers.length == 0">No peers found with ID: {{ receiverID
+          }}</p>
+      </div>
     </div>
     <div v-if="status == 'awaiting-answer'" class="rounded bg-gray-800 p-4 flex flex-row gap-2">
       <p class="flex-1">
