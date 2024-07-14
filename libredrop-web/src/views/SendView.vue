@@ -142,7 +142,8 @@ async function handlePeerIDInput() {
           :disabled="status != 'ready'" @input="handlePeerIDInput" />
         <button
           class="bg-emerald-400 text-gray-900 font-bold disabled:bg-gray-800 disabled:text-gray-200 p-2 rounded flex flex-row gap-2 items-center"
-          @click="handleSend" :disabled="status != 'ready' || !discoveredPeers.includes(receiverID)">
+          @click="handleSend"
+          :disabled="status != 'ready' || receiverID.length == 0 || !discoveredPeers.includes(receiverID)">
           <p>
             Send
           </p>
