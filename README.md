@@ -32,13 +32,3 @@ $ cd signaling-server
 $ go build
 $ go run main.go
 ```
-
-To run libredrop over lan, use `bun dev --host` and `go run main.go {Local IP Here}`. Modifications will need to be
-made to `signaling.ts` in order to point the client to the correct URL for the signaling server.
-
-## Screenshots 
-![Screenshot from 2024-07-17 23-15-14](https://github.com/user-attachments/assets/53e187aa-a41f-4ecf-85ed-ef1195f91c68)
-![Screenshot from 2024-07-17 23-15-40](https://github.com/user-attachments/assets/d06b623f-b98c-4ffd-8d63-af567581cda2)
-![Screenshot from 2024-07-17 23-15-53](https://github.com/user-attachments/assets/3653c509-d3c2-4f19-99f2-f2de699c1c84)
-![Screenshot from 2024-07-17 23-14-51](https://github.com/user-attachments/assets/11057c12-4237-4680-9b6b-9bbed9131d8d)
-
