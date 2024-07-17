@@ -22,7 +22,7 @@ let signalingChannel: SignalingChannel
 let dataChannel: RTCDataChannel
 let discoveryReqController: AbortController
 
-const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending'>('ready')
+const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending' | 'ice-problem'>('ready')
 
 function handleAnswer(answer: Answer) {
   console.log('Received answer!')
@@ -42,9 +42,22 @@ function handleRejection(rejectedOffer: Offer) {
   status.value = 'rejected'
 }
 
+function closeAndCleanup() {
+  files.value = []
+  fileSendProgress.value = []
+  status.value = 'ready'
+  dataChannel.close()
+  signalingChannel.close()
+  filePicker.value?.clear()
+
+  rtcPeerConnection!!.value.close()
+  rtcPeerConnection!!.value = new RTCPeerConnection()
+}
+
 async function handleSend() {
   console.log(receiverID.value)
   status.value = 'awaiting-answer'
+
   //TODO: Reset necessary state to prepare for new transfer
   if (receiverID.value.trim().length > 0) {
     signalingChannel = new SignalingChannel(me.ID)
@@ -74,20 +87,20 @@ async function handleSend() {
       }
 
       //cleaning up
-      files.value = []
-      fileSendProgress.value = []
-      status.value = 'ready'
-      dataChannel.close()
-      signalingChannel.close()
-      filePicker.value?.clear()
-
-      rtcPeerConnection!!.value.close()
-      rtcPeerConnection!!.value = new RTCPeerConnection()
+      closeAndCleanup()
     })
 
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {
       if (e.candidate) {
         signalingChannel.sendIceCandidate(e.candidate)
+      }
+    }
+
+    rtcPeerConnection!.value.oniceconnectionstatechange = (e) => {
+      console.log("ICE CONNECTION STATE: ", rtcPeerConnection!.value.iceConnectionState)
+      if (rtcPeerConnection!.value.iceConnectionState == "disconnected" || rtcPeerConnection!.value.iceConnectionState == "failed") {
+        closeAndCleanup()
+        status.value = 'ice-problem'
       }
     }
 
@@ -115,7 +128,7 @@ function removeFile(i: number) {
   fileSendProgress.value.splice(i, 1)
 }
 
-function handleModalClose() {
+function handleErrorModalClose() {
   status.value = 'ready'
 }
 
@@ -130,7 +143,9 @@ async function handlePeerIDInput() {
 <template>
   <MessageModal v-if="status == 'rejected'" title="Send offer rejected by peer!"
     message="Your send offer was rejected by your peer. Make sure the peer id you entered matches exactly with your intended recepient and try again!"
-    @close="handleModalClose" />
+    @close="handleErrorModalClose" />
+  <MessageModal v-if="status == 'ice-problem'" title="Something went wrong"
+    message="It seems that a problem has occured with the connection to your peer." @close="handleErrorModalClose" />
   <div class="flex flex-col gap-4">
     <SendProgress v-if="files.length > 0" :uploaded-files="files" :upload-progress="fileSendProgress"
       @file-removed="removeFile" />
@@ -152,9 +167,7 @@ async function handlePeerIDInput() {
             <path stroke-linecap="round" stroke-linejoin="round"
               d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
           </svg>
-
         </button>
-
       </div>
       <div v-if="status == 'ready' && receiverID.trim().length > 0"
         class="absolute top-12 left-0 p-2 right-0 rounded bg-gray-800">

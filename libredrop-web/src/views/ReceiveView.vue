@@ -21,6 +21,18 @@ const receivedFiles = ref<File[]>([])
 const currentFile = ref<PartialFile>()
 
 onMounted(() => {
+  setup()
+})
+
+function setup() {
+  rtcPeerConnection!.value.oniceconnectionstatechange = (e) => {
+    console.log("ICE CONNECTION STATE: ", rtcPeerConnection!.value.iceConnectionState)
+    if (rtcPeerConnection!.value.iceConnectionState == "disconnected" || rtcPeerConnection!.value.iceConnectionState == "failed") {
+      closeAndCleanup()
+      setup();
+      status.value = 'done'
+    }
+  }
   rtcPeerConnection?.value.addEventListener('datachannel', (event) =>
     handleDataChannel(event.channel)
   )
@@ -41,7 +53,16 @@ onMounted(() => {
   signalingChannel.onReceiveCandidate = (c) => {
     if (rtcPeerConnection?.value.remoteDescription) rtcPeerConnection?.value.addIceCandidate(c)
   }
-})
+}
+
+function closeAndCleanup() {
+  currentFile.value = undefined
+  numberOfFilesExpected.value = 0
+  currentOffer.value = undefined
+
+  rtcPeerConnection!.value.close()
+  rtcPeerConnection!.value = new RTCPeerConnection()
+}
 
 function handleDataChannel(channel: RTCDataChannel) {
   channel.send('Hello from receiver')
@@ -71,6 +92,8 @@ function handleDataChannel(channel: RTCDataChannel) {
         if (receivedFiles.value.length == numberOfFilesExpected.value) {
           console.log('RECEIVED ALL FILES!')
           status.value = 'done'
+          closeAndCleanup()
+          setup();
         }
       }
     } else if (mt == 3) {

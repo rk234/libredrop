@@ -1,7 +1,7 @@
 import { me, type Peer } from '../transfer/peer'
 
-export const SERVER_DOMAIN_WS = "ws://192.168.1.118:3000"
-export const SERVER_DOMAIN_HTTP = "http://192.168.1.118:3000"
+export const SERVER_DOMAIN_WS = "ws://192.168.0.110:3000"
+export const SERVER_DOMAIN_HTTP = "http://192.168.0.110:3000"
 
 export type SignalingMessage = {
   MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate' | 'rejection'
