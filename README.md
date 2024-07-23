@@ -1,9 +1,11 @@
 # Libredrop
 
-Libredrop is a peer-to-peer file sharing app powered by WebRTC, Vue, and Go Fiber (for the signaling server). 
-Libredrop makes it quick and easy to send files between any two devices with a web browser 
-over LAN, without the need for additional software. Libredrop is still at an early stage and under active
-development.
+Libredrop is a peer-to-peer file sharing app powered by WebRTC, Vue, a custom efficient binary transfer 
+protocol and Go Fiber (for the signaling server). Libredrop makes it quick and easy to send files between 
+any two devices with a web browser over LAN, without the need for additional software. 
+
+Libredrop is still at an early stage and under active development.
+
 
 ## Why is the signaling server needed?
 
@@ -31,4 +33,11 @@ $ cd libredrop
 $ cd signaling-server
 $ go build
 $ go run main.go
+```
+
+To expose the web app and signaling server on your LAN, run `bun dev --host` and pass in your machine's LAN IP as a cli argument to
+`go run main.go {IP HERE}`. Also, create a `.env` file in the `libredrop-web` directory with your LAN IP in the following format:
+
+```
+VITE_LAN_IP={IP HERE}
 ```

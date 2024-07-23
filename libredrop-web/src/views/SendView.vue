@@ -87,7 +87,7 @@ async function handleSend() {
       }
 
       //cleaning up
-      closeAndCleanup()
+      setTimeout(closeAndCleanup, 1000)
     })
 
     rtcPeerConnection!.value.onicecandidate = (e: RTCPeerConnectionIceEvent) => {

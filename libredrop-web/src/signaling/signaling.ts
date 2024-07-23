@@ -1,7 +1,9 @@
 import { me, type Peer } from '../transfer/peer'
 
-export const SERVER_DOMAIN_WS = "ws://192.168.0.110:3000"
-export const SERVER_DOMAIN_HTTP = "http://192.168.0.110:3000"
+const IP = import.meta.env.VITE_LAN_IP ?? "localhost"
+
+export const SERVER_DOMAIN_WS = `ws://${IP}:3000`
+export const SERVER_DOMAIN_HTTP = `http://${IP}:3000`
 
 export type SignalingMessage = {
   MessageType: 'connect' | 'disconnect' | 'offer' | 'answer' | 'candidate' | 'rejection'
