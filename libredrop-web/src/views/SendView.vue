@@ -67,7 +67,6 @@ async function handleSend() {
   console.log(receiverID.value)
   status.value = 'awaiting-answer'
 
-  //TODO: Reset necessary state to prepare for new transfer
   if (receiverID.value.trim().length > 0) {
     signalingChannel = new SignalingChannel(me.ID)
     dataChannel = rtcPeerConnection!!.value.createDataChannel('file-send-channel', {
@@ -95,7 +94,7 @@ async function handleSend() {
         fileIdx++
       }
 
-      //cleaning up
+      //cleaning up, sometimes the last few messages can lag behind
       setTimeout(closeAndCleanup, 1000)
     })
 

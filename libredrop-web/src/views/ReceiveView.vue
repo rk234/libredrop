@@ -26,10 +26,13 @@ onMounted(() => {
 
 function setup() {
   rtcPeerConnection!.value.oniceconnectionstatechange = (e) => {
-    console.log("ICE CONNECTION STATE: ", rtcPeerConnection!.value.iceConnectionState)
-    if (rtcPeerConnection!.value.iceConnectionState == "disconnected" || rtcPeerConnection!.value.iceConnectionState == "failed") {
+    console.log('ICE CONNECTION STATE: ', rtcPeerConnection!.value.iceConnectionState)
+    if (
+      rtcPeerConnection!.value.iceConnectionState == 'disconnected' ||
+      rtcPeerConnection!.value.iceConnectionState == 'failed'
+    ) {
       closeAndCleanup()
-      setup();
+      setup()
       status.value = 'done'
     }
   }
@@ -93,7 +96,7 @@ function handleDataChannel(channel: RTCDataChannel) {
           console.log('RECEIVED ALL FILES!')
           status.value = 'done'
           closeAndCleanup()
-          setup();
+          setup()
         }
       }
     } else if (mt == 3) {
@@ -110,7 +113,6 @@ async function handleOffer(offer: Offer) {
   console.log('OFFER: ')
   currentOffer.value = offer
   status.value = 'offered'
-  //TODO: Reset necessary state to prepare for new transfer, keep files
 }
 
 async function acceptOffer() {
@@ -127,12 +129,7 @@ async function acceptOffer() {
 
   if (answer) {
     rtcPeerConnection?.value.setLocalDescription(answer)
-    signalingChannel.sendAnswer(
-      me.ID,
-      currentOffer.value.From,
-      answer.type,
-      answer.sdp || ''
-    )
+    signalingChannel.sendAnswer(me.ID, currentOffer.value.From, answer.type, answer.sdp || '')
   } else {
     throw new Error('Failed to generate answer!')
   }
