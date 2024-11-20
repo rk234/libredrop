@@ -9,8 +9,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// nextID int to assign
 var nextID int64 = 0
 
+// get all peers except the one that sent the request
 func GetPeers(c *fiber.Ctx) error {
 	myID := c.Params("id")
 
@@ -24,6 +26,7 @@ func GetPeers(c *fiber.Ctx) error {
 	return c.SendString(strings.Join(peers, ","))
 }
 
+// assign a new id for a newly connected peer
 func GetNewID(c *fiber.Ctx) error {
 	nextID++
 	log.Println(fmt.Sprintf("ASSIGNING ID: peer-%v", nextID-1))

@@ -7,6 +7,7 @@ type Answer struct {
 	SDP        string
 }
 
+// map of peers and the answers they sent
 var answers map[string]Answer = make(map[string]Answer)
 
 func PutAnswer(answer Answer) {

@@ -25,6 +25,7 @@ func SignalingChannel(c *websocket.Conn) {
 	)
 
 	for {
+		//read message from WS, handle errors
 		if mt, msg, err = c.ReadMessage(); err != nil {
 			log.Println("read: ", err)
 			state.DisconnectPeer(peerID)
@@ -36,26 +37,31 @@ func SignalingChannel(c *websocket.Conn) {
 
 		var sm SignalMessage
 
+		// marse msg string as SignalMessage type, handle error
 		if err := json.Unmarshal(msg, &sm); err != nil {
 			log.Println("err: ", err)
 		}
 
 		log.Println("sm: ", sm)
 
+		//handle different message types
 		switch sm.MessageType {
 		case "offer":
+			//offer received, send it to the intended recipient
 			str, _ := json.Marshal(sm.MessageData)
 			var offer state.Offer
-			json.Unmarshal(str, &offer)
+			json.Unmarshal(str, &offer) // parse json to offer type
 
-			state.PutOffer(offer)
+			state.PutOffer(offer) // put offer in state
 
+			// send offer to receiving peer
 			log.Println("Broadcasting offer to ", offer.To)
 			conn := state.PeerConnections[offer.To]
 			if err := conn.WriteJSON(sm); err != nil {
 				log.Println("err: ", err)
 			}
 		case "answer":
+			//answer received, send it to the peer that made the corresponding offer
 			str, _ := json.Marshal(sm.MessageData)
 			var answer state.Answer
 			json.Unmarshal(str, &answer)
@@ -66,6 +72,7 @@ func SignalingChannel(c *websocket.Conn) {
 				log.Println("err: ", err)
 			}
 		case "candidate":
+			//WebRTC ICE candidate received, broadcast to other peers
 			for receiver, conn := range state.PeerConnections {
 				if receiver != peerID {
 					log.Println("Transmitting candidate to", receiver)
@@ -75,10 +82,12 @@ func SignalingChannel(c *websocket.Conn) {
 				}
 			}
 		case "rejection":
+			//rejection received, send it to the peer that made the correspinding offer
 			str, _ := json.Marshal(sm.MessageData)
 			var offer state.Offer
 			json.Unmarshal(str, &offer)
 
+			//remove offer, rejected
 			state.RemoveOffer(offer.From)
 			conn := state.PeerConnections[offer.From]
 			log.Println("Sending rejection to " + offer.From)
@@ -86,6 +95,7 @@ func SignalingChannel(c *websocket.Conn) {
 				log.Println("err: ", err)
 			}
 		default:
+			//no corresponding message type, write it back
 			if err = c.WriteMessage(mt, msg); err != nil {
 				log.Println("write: ", err)
 			}
