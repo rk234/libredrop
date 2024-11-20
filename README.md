@@ -15,6 +15,12 @@ information to create a WebRTC peer connection between them. The signaling serve
 transferred between the two clients. The tranfer process itself is entirely peer-to-peer, and does not involve the server 
 in any way.
 
+## Demo
+
+![image](https://github.com/user-attachments/assets/f4520593-b521-48e4-b440-69ea29159f4a)
+
+[Demo Video Here: ](https://github.com/user-attachments/assets/5d041b44-c85d-49d8-ac25-9b099d59221e)
+
 ## Developing
 
 Starting up the vite development server on localhost:
