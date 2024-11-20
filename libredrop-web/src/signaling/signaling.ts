@@ -1,6 +1,6 @@
 import { me, type Peer } from '../transfer/peer'
 
-const IP = import.meta.env.VITE_LAN_IP ?? "localhost"
+const IP = import.meta.env.VITE_LAN_IP ?? 'localhost'
 
 export const SERVER_DOMAIN_WS = `ws://${IP}:3000`
 export const SERVER_DOMAIN_HTTP = `http://${IP}:3000`
@@ -68,7 +68,7 @@ export class SignalingChannel {
     const sm = JSON.parse(event.data) as SignalingMessage
 
     switch (sm.MessageType) {
-      case 'connect':
+      case 'connect': //unused
         const peer = sm.MessageData as Peer
         if (peer.ID != me.ID) {
           if (channel.onPeerConnect) channel.onPeerConnect(peer)

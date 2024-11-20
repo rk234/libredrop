@@ -1,7 +1,7 @@
 /*
 Send Protocol Byte Format:
 
-0: Message Type (byte) => 0 = Start File Header, 1 = File Data, 2 = End File Header
+0: Message Type (byte) => 0 = Start File Header, 1 = File Data, 2 = End File Header, 3 = TransferStartMessage
 ======
 File data:
 1: Chunk Size in bytes
@@ -19,21 +19,21 @@ export type TransferStartMessage = {
 }
 
 export type FileStartMessage = {
-  messageNumber: number
+  messageNumber: number //0
   fileName: string
   fileSize: number
   fileType: string
 }
 
 export type FileDataMessage = {
-  messageNumber: number
+  messageNumber: number //1
   chunkIndex: number
   chunkSize: number
   data: ArrayBuffer
 }
 
 export type FileEndMessage = {
-  messageNumber: number
+  messageNumber: number //2
 } //TODO
 
 export function createTransferStartMessage(numberOfFiles: number) {
@@ -70,7 +70,7 @@ export function createFileStartMessage(
   for (var i = 0; i < filename.length; i++) {
     view.setUint8(1 + 4 + i, filenameBytes[i])
   }
-  view.setUint8(1 + 4 + filename.length, 0)
+  view.setUint8(1 + 4 + filename.length, 0) // null terminate
 
   const fileTypeBytes = encoder.encode(fileType)
   for (var i = 0; i < fileType.length; i++) {

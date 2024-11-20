@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { me } from '@/transfer/peer'
-import { SERVER_DOMAIN_HTTP, SignalingChannel, type Answer, type Offer } from '@/signaling/signaling'
+import {
+  SERVER_DOMAIN_HTTP,
+  SignalingChannel,
+  type Answer,
+  type Offer
+} from '@/signaling/signaling'
 import { computed, inject, ref, type Ref } from 'vue'
 import FilePicker from '../components/FilePicker.vue'
 import MessageModal from '../components/MessageModal.vue'
@@ -11,7 +16,9 @@ import axios from 'axios'
 
 const receiverID = ref<string>('')
 const discoveredPeers = ref<string[]>([])
-const matchedPeers = computed<string[]>(() => discoveredPeers.value.filter(p => p.includes(receiverID.value)))
+const matchedPeers = computed<string[]>(() =>
+  discoveredPeers.value.filter((p) => p.includes(receiverID.value))
+)
 const rtcPeerConnection = inject<Ref<RTCPeerConnection>>('rtcConnection')
 const files = ref<File[]>([])
 const fileSendProgress = ref<number[]>([])
@@ -22,7 +29,9 @@ let signalingChannel: SignalingChannel
 let dataChannel: RTCDataChannel
 let discoveryReqController: AbortController
 
-const status = ref<'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending' | 'ice-problem'>('ready')
+const status = ref<
+  'ready' | 'awaiting-answer' | 'answered' | 'rejected' | 'sending' | 'ice-problem'
+>('ready')
 
 function handleAnswer(answer: Answer) {
   console.log('Received answer!')
@@ -97,8 +106,11 @@ async function handleSend() {
     }
 
     rtcPeerConnection!.value.oniceconnectionstatechange = (e) => {
-      console.log("ICE CONNECTION STATE: ", rtcPeerConnection!.value.iceConnectionState)
-      if (rtcPeerConnection!.value.iceConnectionState == "disconnected" || rtcPeerConnection!.value.iceConnectionState == "failed") {
+      console.log('ICE CONNECTION STATE: ', rtcPeerConnection!.value.iceConnectionState)
+      if (
+        rtcPeerConnection!.value.iceConnectionState == 'disconnected' ||
+        rtcPeerConnection!.value.iceConnectionState == 'failed'
+      ) {
         closeAndCleanup()
         status.value = 'ice-problem'
       }
@@ -135,8 +147,12 @@ function handleErrorModalClose() {
 async function handlePeerIDInput() {
   if (discoveryReqController) discoveryReqController.abort()
   discoveryReqController = new AbortController()
-  const data = (await axios.get(SERVER_DOMAIN_HTTP + "/discovery/find/" + me.ID, { signal: discoveryReqController.signal })).data as string
-  discoveredPeers.value = data.split(",")
+  const data = (
+    await axios.get(SERVER_DOMAIN_HTTP + '/discovery/find/' + me.ID, {
+      signal: discoveryReqController.signal
+    })
+  ).data as string
+  discoveredPeers.value = data.split(',')
 }
 </script>
 
@@ -157,11 +173,9 @@ async function handlePeerIDInput() {
           :disabled="status != 'ready'" @input="handlePeerIDInput" />
         <button
           class="bg-emerald-400 text-gray-900 font-bold disabled:bg-gray-800 disabled:text-gray-200 p-2 rounded flex flex-row gap-2 items-center"
-          @click="handleSend"
-          :disabled="status != 'ready' || receiverID.length == 0 || !discoveredPeers.includes(receiverID)">
-          <p>
-            Send
-          </p>
+          @click="handleSend" :disabled="status != 'ready' || receiverID.length == 0 || !discoveredPeers.includes(receiverID)
+            ">
+          <p>Send</p>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
             stroke="currentColor" class="size-4">
             <path stroke-linecap="round" stroke-linejoin="round"
@@ -173,15 +187,16 @@ async function handlePeerIDInput() {
         class="absolute top-12 left-0 p-2 right-0 rounded bg-gray-800">
         <ul v-if="matchedPeers.length > 0" class="flex flex-col justify-center gap-2">
           <button class="flex flex-row gap-2 hover:bg-gray-700 p-2 rounded" v-for="peer in matchedPeers"
-            @click="() => receiverID = peer">
-            <div class="rounded-full bg-emerald-400 p-1 text-xs text-gray-900 font-bold">Online</div>
+            @click="() => (receiverID = peer)">
+            <div class="rounded-full bg-emerald-400 p-1 text-xs text-gray-900 font-bold">
+              Online
+            </div>
             <span>
               {{ peer }}
             </span>
           </button>
         </ul>
-        <p v-if="matchedPeers.length == 0">No peers found with ID: {{ receiverID
-          }}</p>
+        <p v-if="matchedPeers.length == 0">No peers found with ID: {{ receiverID }}</p>
       </div>
     </div>
     <div v-if="status == 'awaiting-answer'" class="rounded bg-gray-800 p-4 flex flex-row gap-2">
