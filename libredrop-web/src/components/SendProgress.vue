@@ -20,7 +20,7 @@ function removeFile(index: number) {
   <h1 class="text-xl font-bold">Files to send</h1>
   <ul class="flex flex-col gap-2">
     <li class="p-2 border border-gray-800 bg-gray-900 items-center rounded flex flex-row gap-2"
-      v-for="(file, index) in uploadedFiles">
+      v-for="(file, index) in uploadedFiles" v-bind:key="index">
       <div class="flex-1 flex gap-4 flex-row items-center">
         <div class="flex flex-1 flex-col">
           <h2 class="text-lg font-bold">{{ file.name }}</h2>
